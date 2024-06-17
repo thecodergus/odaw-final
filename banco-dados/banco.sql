@@ -8,7 +8,8 @@ CREATE TYPE DOCUMENTO_TIPO AS ENUM ('CONTA', 'RECEITA');
 CREATE TABLE IF NOT EXISTS usuario (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nome TEXT NOT NULL,
-    email TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    senha TEXT NOT NULL,
     data_de_nascimento DATE NOT NULL
 );
 
@@ -25,6 +26,6 @@ CREATE TABLE IF NOT EXISTS documento (
 -- Criando tabela categoria
 CREATE TABLE IF NOT EXISTS categoria (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    nome TEXT NOT NULL,
+    nome TEXT UNIQUE NOT NULL,
     id_documento UUID REFERENCES documento(id)
 );
