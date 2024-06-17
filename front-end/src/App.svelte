@@ -1,9 +1,14 @@
 <script>
+  import { Router, Link, Route } from "svelte-routing";
+
+  import CadastroUsuario from "./routes/CadastroUsuario.svelte";
+
+  export let url = "";
 </script>
 
-<main>
-  <h1>Ola</h1>
-</main>
+<Router {url}>
+  <Route path="/cadastro" component={CadastroUsuario} />
+</Router>
 
 <style>
 </style>
