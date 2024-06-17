@@ -1,0 +1,13 @@
+[package]
+name = "back-end"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenvy = "0.15"
+rocket = "0.5.1"
+postgres = "0.19.7"
+rust_decimal = "1.14.0"
+chrono = "0.4"
