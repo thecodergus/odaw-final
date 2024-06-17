@@ -119,6 +119,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "postgres",
+ "rand",
  "rocket",
  "rust_decimal",
 ]

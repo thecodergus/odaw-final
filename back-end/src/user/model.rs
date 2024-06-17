@@ -56,3 +56,30 @@ pub fn update_user(user: User) -> Result<(), Error> {
         Err(err) => Err(err),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db;
+    use rand::Rng;
+
+    #[test]
+    fn test_insert_user() {
+        let email = format!(
+            "gustavo.michels.de.camargo{}@gmail.com",
+            rand::thread_rng().gen_range(0..1000)
+        );
+        let user = User {
+            email: Some(email),
+            id: None,
+            data_de_nascimento: NaiveDate::parse_from_str("1998-05-18", "%Y-%m-%d").unwrap(),
+            nome: "Gustavo Michels de Camargo".to_string(),
+            senha: Some("Pau grosso 2024".to_string()),
+        };
+
+        assert!(match register_user(user) {
+            Ok(_) => true,
+            Err(_) => false,
+        });
+    }
+}
