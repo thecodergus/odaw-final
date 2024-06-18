@@ -1,0 +1,30 @@
+  body {
+      background-color: #E5E5E5;
+  }
+
+  .botao-amarelo {
+      background-color: #FFD369;
+      color: #222831;
+  }
+
+  .botao-amarelo:hover {
+      background-color: #ffc02f;
+      color: #222831;
+  }
+
+  .botao-amarelo:active {
+      background-color: #ffb300;
+      color: #222831;
+  }
+
+  .botao-preto {
+      background-color: #393E46;
+      color: #EEEEEE;
+  }
+
+  .logo {
+      max-width: 400px;
+      max-height: 300px;
+      width: auto;
+      height: auto;
+  }
