@@ -1,6 +1,7 @@
 <script>
     // Importe a variável reativa do Svelte
     import Popup from "../lib/Popup.svelte";
+    import { validarEmail } from "../utils";
 
     // Crie variáveis reativas para os campos
     let nome = "";
@@ -33,17 +34,6 @@
             popupMensagem = "";
         };
         popupVisivel = true;
-    }
-
-    function validarEmail(input) {
-        const validRegex =
-            /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-
-        if (input.match(validRegex)) {
-            return true;
-        } else {
-            return false;
-        }
     }
 </script>
 
