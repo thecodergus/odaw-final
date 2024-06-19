@@ -3,6 +3,8 @@ use postgres::Error;
 use uuid::Uuid;
 
 use crate::db::get_client;
+
+#[derive(Clone)]
 pub struct User {
     id: Option<Uuid>,
     nome: String,
@@ -101,18 +103,27 @@ mod tests {
         };
     }
 
-    //     #[test]
-    //     fn test_update_user() {
-    //         let user = User {
-    //             id: Some("123".to_string()),
-    //             nome: "John Doe".to_string(),
-    //             email: Some("john.doe@example.com".to_string()),
-    //             data_de_nascimento: NaiveDate::from_ymd_opt(1990, 1, 1).unwrap(),
-    //             senha: None,
-    //         };
-    //         match update_user(user) {
-    //             Ok(_) => println!("User updated successfully"),
-    //             Err(err) => panic!("Failed to update user: {}", err),
-    //         };
-    // }
+    #[test]
+    fn test_update_user() {
+        let rand = rand::thread_rng().gen_range(0..1000);
+        let email = format!("test{}@example.com", rand).to_string();
+        let user = User {
+            id: None,
+            nome: "John Doe".to_string(),
+            email: Some(email),
+            data_de_nascimento: NaiveDate::from_ymd_opt(1990, 1, 1).unwrap(),
+            senha: Some("Teste123".to_string()),
+        };
+
+        let _ = register_user(user.clone());
+
+        let mut user_2 = find_user(user.email.unwrap(), user.senha.unwrap()).unwrap();
+
+        user_2.nome = "Outro nome qualquer".to_string();
+
+        match update_user(user_2) {
+            Ok(_) => println!("User updated successfully"),
+            Err(err) => panic!("Failed to update user: {}", err),
+        };
+    }
 }
