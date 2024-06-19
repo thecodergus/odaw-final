@@ -42,8 +42,8 @@ pub fn insert_document(doc: &Document) -> Result<(), Error> {
 // Function to update a document in the database
 pub fn update_document(doc: &Document) -> Result<(), Error> {
     match get_client().execute(
-        "UPDATE documento SET tipo_de_documento = $1, valor = $2, data = $3, descricao = $4, id_usuario = $5 WHERE id = $6",
-        &[&doc.tipo_documento.to_string(), &doc.valor.to_string(), &doc.data, &doc.descricao, &doc.id_usuario],
+        &format!("UPDATE documento SET tipo_de_documento = '{}', valor = '{}', data = $1, descricao = $2, id_usuario = $3 WHERE id = $4", doc.tipo_documento.to_string(), doc.valor.to_string()),
+        &[&doc.data, &doc.descricao, &doc.id_usuario],
     ){
         Ok(_) => Ok(()),
         Err(err) => Err(err)
@@ -51,7 +51,7 @@ pub fn update_document(doc: &Document) -> Result<(), Error> {
 }
 
 // Function to delete a document from the database
-pub fn delete_document(id: String) -> Result<(), Error> {
+pub fn delete_document(id: &Uuid) -> Result<(), Error> {
     match get_client().execute("DELETE FROM documento WHERE id = $1", &[&id]) {
         Ok(_) => Ok(()),
         Err(err) => Err(err),
