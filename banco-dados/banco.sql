@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Criando enumerador
-CREATE TYPE DOCUMENTO_TIPO AS ENUM ('CONTA', 'RECEITA');
+CREATE TYPE DOCUMENTO_TIPO AS ENUM ('conta', 'receita');
 
 -- Criando tabela usuario
 CREATE TABLE IF NOT EXISTS usuario (
