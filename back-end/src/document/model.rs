@@ -1,7 +1,7 @@
 use crate::db::get_client;
 use chrono::{Duration, NaiveDate};
 use postgres::types::ToSql;
-use postgres::Error;
+use postgres::{Error, Row};
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
@@ -13,8 +13,16 @@ pub enum Type {
 impl Type {
     fn to_string(&self) -> String {
         match self {
-            Type::CONTA => "CONTA".to_string(),
+            Type::CONTA => "conta".to_string(),
             Type::RECEITA => "receita".to_string(),
+        }
+    }
+
+    fn from_str(t: String) -> Type {
+        if t.to_lowercase() == "conta" {
+            return Type::CONTA;
+        } else {
+            return Type::RECEITA;
         }
     }
 }
@@ -55,6 +63,31 @@ pub fn delete_document(id: &Uuid) -> Result<(), Error> {
     match get_client().execute("DELETE FROM documento WHERE id = $1", &[&id]) {
         Ok(_) => Ok(()),
         Err(err) => Err(err),
+    }
+}
+
+pub fn find_document(id: &Uuid) -> Result<Document, Error> {
+    match get_client().query_one("SELECT id, tipo_de_documento, CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id = $1" , &[id]){
+        Ok(ret) => Ok(row_to_doc(ret)),
+        Err(err) => Err(err)
+    }
+}
+
+pub fn find_by_user(id: &Uuid) -> Result<Vec<Document>, Error> {
+    match get_client().query("SELECT id, tipo_de_documento, CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id_usuario = $1", &[id]) {
+        Ok(ret) => Ok(ret.into_iter().map(row_to_doc).collect()),
+        Err(err) => Err(err)
+    }
+}
+
+fn row_to_doc(ret: Row) -> Document {
+    Document {
+        id: Some(ret.get("id")),
+        data: ret.get("data"),
+        descricao: ret.get("descricao"),
+        tipo_documento: Type::from_str(ret.get("tipo_de_documento")),
+        valor: Decimal::from_str_exact(ret.get("valor")).expect("Ta errado esse valor"),
+        id_usuario: ret.get("id_usuario"),
     }
 }
 
