@@ -1,5 +1,5 @@
 <script>
-// @ts-nocheck
+    // @ts-nocheck
 
     import Chart from "chart.js/auto";
     import { onMount } from "svelte";
@@ -41,7 +41,7 @@
     });
 </script>
 
-<div class="container-fluid">
+<div class="container">
     <div class="row">
         <h2>Minhas contas</h2>
     </div>
@@ -49,7 +49,7 @@
         <div class="col">
             <Tags />
         </div>
-        <div class="col">
+        <div class="col-6">
             <canvas
                 bind:this={resumoCanvas}
                 id="resumo"
@@ -58,8 +58,22 @@
             />
         </div>
         <div class="col">
-            <DateInput bind:value={data_inicio} format={"dd-MM-yyyy"} />
-            <DateInput bind:value={data_fim} format={"dd-MM-yyyy"} />
+            <div class="row">
+                <label for="data-inicio">Data Inicio</label>
+                <DateInput
+                    id={"data-inicio"}
+                    bind:value={data_inicio}
+                    format={"dd-MM-yyyy"}
+                />
+            </div>
+            <div class="row">
+                <label for="data-fim">Data Fim</label>
+                <DateInput
+                    id={"data-fim"}
+                    bind:value={data_fim}
+                    format={"dd-MM-yyyy"}
+                />
+            </div>
         </div>
     </div>
     <div class="row">
@@ -77,7 +91,11 @@
                     <td>
                         <span class="badge bg-secondary">Cat</span>
                     </td>
-                    <td>Otto</td>
+                    <td>
+                        <button class="btn btn-opcoes">Ver</button>
+                        <button class="btn btn-opcoes">Editar</button>
+                        <button class="btn btn-opcoes">Excluir</button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -87,5 +105,15 @@
 <style>
     div .row {
         margin-top: 10px;
+    }
+    .btn-opcoes {
+        background: none !important;
+        border: none;
+        padding: 0 !important;
+        font-family: Arial, sans-serif;
+        color: #069;
+        text-decoration: underline;
+        cursor: pointer;
+        margin-left: 5px;
     }
 </style>
