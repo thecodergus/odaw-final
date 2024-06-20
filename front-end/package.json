@@ -10,12 +10,14 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "date-picker-svelte": "^2.13.0",
     "svelte": "^4.2.12",
     "vite": "^5.2.0"
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.3",
-    "svelte-routing": "^2.13.0"
+    "svelte-routing": "^2.13.0",
+    "svelte-tags-input": "^6.0.0"
   }
 }
