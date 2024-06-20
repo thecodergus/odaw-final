@@ -38,7 +38,7 @@ pub fn find_categories(id_documento: Uuid) -> Result<Vec<Category>, Error> {
     }
 }
 
-pub fn register_categories(id_documento: String, categories: Vec<Category>) -> Result<(), Error> {
+pub fn register_categories(id_documento: Uuid, categories: Vec<Category>) -> Result<(), Error> {
     let mut client: Client = get_client();
     let mut transaction: Transaction = match client.transaction() {
         Ok(t) => t,
