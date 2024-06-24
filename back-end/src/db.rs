@@ -1,7 +1,7 @@
 use postgres::{Client, NoTls};
 
 pub fn get_client() -> Client {
-    match Client::connect("postgresql://admin:admin@localhost:5051/odaw", NoTls) {
+    match Client::connect("postgresql://postgres:udesc@0.0.0.0:5432/odaw", NoTls) {
         Ok(valor) => valor,
         Err(err) => panic!("Deu treta: {}", err),
     }
