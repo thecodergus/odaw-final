@@ -7,11 +7,11 @@ use crate::db::get_client;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct User {
-    id: Option<Uuid>,
-    nome: String,
-    email: Option<String>,
-    data_de_nascimento: NaiveDate,
-    senha: Option<String>,
+    pub id: Option<Uuid>,
+    pub nome: String,
+    pub email: Option<String>,
+    pub data_de_nascimento: NaiveDate,
+    pub senha: Option<String>,
 }
 
 pub fn find_user(email: String, password: String) -> Result<User, Error> {
