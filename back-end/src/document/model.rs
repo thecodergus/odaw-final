@@ -3,9 +3,11 @@ use chrono::{Duration, NaiveDate};
 use postgres::types::ToSql;
 use postgres::{Error, Row};
 use rust_decimal::Decimal;
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Type {
     CONTA,
     RECEITA,
@@ -28,7 +30,7 @@ impl Type {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Document {
     id: Option<Uuid>,
     tipo_documento: Type,

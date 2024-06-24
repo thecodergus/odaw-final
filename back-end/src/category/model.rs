@@ -1,9 +1,11 @@
 use postgres::{Client, Error, Transaction};
 use rocket::http::ext::IntoCollection;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::db::get_client;
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Category {
     id: Option<Uuid>,
     nome: String,

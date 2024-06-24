@@ -1,10 +1,11 @@
 use chrono::{Duration, NaiveDate};
 use postgres::Error;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::db::get_client;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct User {
     id: Option<Uuid>,
     nome: String,
