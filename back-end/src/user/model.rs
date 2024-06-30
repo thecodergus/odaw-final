@@ -14,8 +14,8 @@ pub struct User {
     pub senha: Option<String>,
 }
 
-pub fn find_user(email: String, password: String) -> Result<User, Error> {
-    match get_client() {
+pub async fn find_user(email: String, password: String) -> Result<User, Error> {
+    match get_client().await {
         Ok(mut client) => {
             match client.query_one(
                 "SELECT id, nome, data_de_nascimento FROM usuario WHERE email = $1 AND senha = $2 ",
@@ -31,15 +31,13 @@ pub fn find_user(email: String, password: String) -> Result<User, Error> {
                 Err(err) => Err(err),
             }
         }
-        Err(err) => {
-            return Err(err);
-        }
+        Err(err) => Err(err),
     }
 }
 
-pub fn register_user(new_user: User) -> Result<(), Error> {
-    match get_client() {
-        Ok(mut client) => return match client.execute(
+pub async fn register_user(new_user: User) -> Result<(), Error> {
+    match get_client().await {
+        Ok(mut client) => match client.execute(
             "INSERT INTO usuario (nome, email, senha, data_de_nascimento) VALUES ($1, $2, $3, $4)",
             &[
                 &new_user.nome,
@@ -55,10 +53,10 @@ pub fn register_user(new_user: User) -> Result<(), Error> {
     }
 }
 
-pub fn update_user(user: User) -> Result<(), Error> {
-    match get_client() {
+pub async fn update_user(user: User) -> Result<(), Error> {
+    match get_client().await {
         Ok(mut client) => {
-            return match client.execute(
+            match client.execute(
                 "UPDATE usuario SET nome = $1, email = $2, data_de_nascimento = $3 WHERE id = $4",
                 &[&user.nome, &user.email, &user.data_de_nascimento, &user.id],
             ) {
@@ -74,9 +72,10 @@ pub fn update_user(user: User) -> Result<(), Error> {
 mod tests {
     use super::*;
     use rand::Rng;
+    use rocket::tokio;
 
-    #[test]
-    fn test_insert_user() {
+    #[tokio::test]
+    async fn test_insert_user() {
         let email = format!(
             "gustavo.michels.de.camargo{}@gmail.com",
             rand::thread_rng().gen_range(0..1000)
@@ -89,14 +88,14 @@ mod tests {
             senha: Some("Pau grosso 2024".to_string()),
         };
 
-        match register_user(user) {
+        match register_user(user).await {
             Ok(_) => println!("Tudo ok"),
             Err(err) => panic!("Deu merda: {}", err),
         };
     }
 
-    #[test]
-    fn test_find_user() {
+    #[tokio::test]
+    async fn test_find_user() {
         let rand = rand::thread_rng().gen_range(0..1000);
         let email = format!("test{}@example.com", rand).to_string();
         let password = "password123".to_string();
@@ -110,7 +109,7 @@ mod tests {
 
         let _ = register_user(user);
 
-        match find_user(email.clone(), password.clone()) {
+        match find_user(email.clone(), password.clone()).await {
             Ok(user) => {
                 assert_eq!(user.email, Some(email));
                 assert_eq!(user.senha, None);
@@ -119,8 +118,8 @@ mod tests {
         };
     }
 
-    #[test]
-    fn test_update_user() {
+    #[tokio::test]
+    async fn test_update_user() {
         let rand = rand::thread_rng().gen_range(0..1000);
         let email = format!("test{}@example.com", rand).to_string();
         let user = User {
@@ -133,11 +132,13 @@ mod tests {
 
         let _ = register_user(user.clone());
 
-        let mut user_2 = find_user(user.email.unwrap(), user.senha.unwrap()).unwrap();
+        let mut user_2 = find_user(user.email.unwrap(), user.senha.unwrap())
+            .await
+            .unwrap();
 
         user_2.nome = "Outro nome qualquer".to_string();
 
-        match update_user(user_2) {
+        match update_user(user_2).await {
             Ok(_) => println!("User updated successfully"),
             Err(err) => panic!("Failed to update user: {}", err),
         };

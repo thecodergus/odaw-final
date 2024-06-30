@@ -41,9 +41,9 @@ pub struct Document {
 }
 
 // Function to insert a document into the database
-pub fn insert_document(doc: &Document) -> Result<(), Error> {
-    match get_client(){
-        Ok(mut client)=> return match client.execute(
+pub async fn insert_document(doc: &Document) -> Result<(), Error> {
+    match get_client().await{
+        Ok(mut client)=> match client.execute(
         &format!("INSERT INTO documento (tipo_de_documento, valor, data, descricao, id_usuario) VALUES ('{}', '{}', $1, $2, $3)", doc.tipo_documento.to_string(), doc.valor.to_string()),
         &[&doc.data, &doc.descricao, &doc.id_usuario],
     ){
@@ -55,9 +55,9 @@ pub fn insert_document(doc: &Document) -> Result<(), Error> {
 }
 
 // Function to update a document in the database
-pub fn update_document(doc: &Document) -> Result<(), Error> {
-    match get_client(){
-        Ok(mut client) => return match client.execute(
+pub async fn update_document(doc: &Document) -> Result<(), Error> {
+    match get_client().await{
+        Ok(mut client) => match client.execute(
         &format!("UPDATE documento SET tipo_de_documento = '{}', valor = '{}', data = $1, descricao = $2 WHERE id = $3", doc.tipo_documento.to_string(), doc.valor.to_string()),
         &[&doc.data, &doc.descricao, &doc.id],
     ){
@@ -69,8 +69,8 @@ pub fn update_document(doc: &Document) -> Result<(), Error> {
 }
 
 // Function to delete a document from the database
-pub fn delete_document(id: &Uuid) -> Result<(), Error> {
-    match get_client() {
+pub async fn delete_document(id: &Uuid) -> Result<(), Error> {
+    match get_client().await {
         Ok(mut client) => {
             return match client.execute("DELETE FROM documento WHERE id = $1", &[&id]) {
                 Ok(_) => Ok(()),
@@ -81,8 +81,8 @@ pub fn delete_document(id: &Uuid) -> Result<(), Error> {
     }
 }
 
-pub fn find_document(id: &Uuid) -> Result<Document, Error> {
-    match get_client(){
+pub async fn find_document(id: &Uuid) -> Result<Document, Error> {
+    match get_client().await{
         Ok(mut client) => return match client.query_one("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id = $1" , &[id]){
         Ok(ret) => Ok(row_to_doc(ret)),
         Err(err) => Err(err)
@@ -91,9 +91,9 @@ pub fn find_document(id: &Uuid) -> Result<Document, Error> {
     }
 }
 
-pub fn find_by_user(id: &Uuid) -> Result<Vec<Document>, Error> {
-    match get_client(){
-        Ok(mut client) => return match client.query("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id_usuario = $1", &[id]) {
+pub async fn find_by_user(id: &Uuid) -> Result<Vec<Document>, Error> {
+    match get_client().await{
+        Ok(mut client) => match client.query("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id_usuario = $1", &[id]) {
         Ok(ret) => Ok(ret.into_iter().map(row_to_doc).collect()),
         Err(err) => Err(err)
     },
@@ -114,13 +114,13 @@ fn row_to_doc(ret: Row) -> Document {
 
 #[cfg(test)]
 mod tests {
-    use rocket::futures::SinkExt;
+    use rocket::{futures::SinkExt, tokio};
 
     use super::*;
     use std::str::FromStr;
 
-    #[test]
-    fn test_insert_document() {
+    #[tokio::test]
+    async fn test_insert_document() {
         let doc = Document {
             id: None,
             tipo_documento: Type::RECEITA,
@@ -130,24 +130,26 @@ mod tests {
             id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
-        match insert_document(&doc) {
+        match insert_document(&doc).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
     }
 
-    #[test]
-    fn test_find_document_by_user() {
+    #[tokio::test]
+    async fn test_find_document_by_user() {
         match find_by_user(
             &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
-        ) {
+        )
+        .await
+        {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
     }
 
-    #[test]
-    fn test_find_document() {
+    #[tokio::test]
+    async fn test_find_document() {
         let doc = Document {
             id: None,
             tipo_documento: Type::RECEITA,
@@ -157,28 +159,30 @@ mod tests {
             id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
-        match insert_document(&doc) {
+        match insert_document(&doc).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
         let doc_2 = match find_by_user(
             &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
-        ) {
+        )
+        .await
+        {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),
         };
 
         for d in doc_2 {
-            match find_document(&d.id.unwrap()) {
+            match find_document(&d.id.unwrap()).await {
                 Ok(_) => (),
                 Err(err) => panic!("Deu ruim: {}", err),
             }
         }
     }
 
-    #[test]
-    fn test_update_document() {
+    #[tokio::test]
+    async fn test_update_document() {
         let doc = Document {
             id: None,
             tipo_documento: Type::RECEITA,
@@ -188,14 +192,16 @@ mod tests {
             id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
-        match insert_document(&doc) {
+        match insert_document(&doc).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
         let doc_2 = match find_by_user(
             &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
-        ) {
+        )
+        .await
+        {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),
         };
@@ -205,7 +211,7 @@ mod tests {
                 let mut d2 = d.clone();
                 d2.descricao = "Descrição alterada".to_string();
 
-                match update_document(&d2) {
+                match update_document(&d2).await {
                     Ok(_) => (),
                     Err(err) => panic!("Deu ruim: {}", err),
                 }
@@ -214,8 +220,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_delete_document() {
+    #[tokio::test]
+    async fn test_delete_document() {
         let doc = Document {
             id: None,
             tipo_documento: Type::RECEITA,
@@ -225,14 +231,16 @@ mod tests {
             id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
-        match insert_document(&doc) {
+        match insert_document(&doc).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
         let doc_2 = match find_by_user(
             &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
-        ) {
+        )
+        .await
+        {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),
         };

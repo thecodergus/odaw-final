@@ -12,8 +12,8 @@ pub struct Category {
     id_documento: Option<Uuid>,
 }
 
-pub fn find_category(id: &Uuid) -> Result<Category, Error> {
-    match get_client() {
+pub async fn find_category(id: &Uuid) -> Result<Category, Error> {
+    match get_client().await {
         Ok(mut client) => {
             return match client.query_one("SELECT id, nome FROM categoria WHERE id='$1'", &[&id]) {
                 Ok(row) => Ok(Category {
@@ -28,8 +28,8 @@ pub fn find_category(id: &Uuid) -> Result<Category, Error> {
     }
 }
 
-pub fn find_categories_by_document(id_documento: &Uuid) -> Result<Vec<Category>, Error> {
-    match get_client() {
+pub async fn find_categories_by_document(id_documento: &Uuid) -> Result<Vec<Category>, Error> {
+    match get_client().await {
         Ok(mut client) => {
             return match client.query(
                 "SELECT id, nome FROM categoria WHERE id_documento='$1'",
@@ -50,8 +50,8 @@ pub fn find_categories_by_document(id_documento: &Uuid) -> Result<Vec<Category>,
     }
 }
 
-pub fn delete_category(id: &Uuid) -> Result<(), Error> {
-    match get_client() {
+pub async fn delete_category(id: &Uuid) -> Result<(), Error> {
+    match get_client().await {
         Ok(mut client) => match client.query_one("DELETE FROM categeria WHERE id = $1", &[id]) {
             Ok(_) => Ok(()),
             Err(err) => Err(err),
@@ -60,8 +60,8 @@ pub fn delete_category(id: &Uuid) -> Result<(), Error> {
     }
 }
 
-pub fn delete_category_by_document(id_documento: &Uuid) -> Result<(), Error> {
-    match get_client() {
+pub async fn delete_category_by_document(id_documento: &Uuid) -> Result<(), Error> {
+    match get_client().await {
         Ok(mut client) => match client.query_one(
             "DELETE FROM categeria WHERE id_documento = $1",
             &[id_documento],
@@ -73,8 +73,11 @@ pub fn delete_category_by_document(id_documento: &Uuid) -> Result<(), Error> {
     }
 }
 
-pub fn register_categories(id_documento: &Uuid, categories: Vec<Category>) -> Result<(), Error> {
-    let mut client: Client = match get_client() {
+pub async fn register_categories(
+    id_documento: &Uuid,
+    categories: Vec<Category>,
+) -> Result<(), Error> {
+    let mut client: Client = match get_client().await {
         Ok(c) => c,
         Err(err) => return Err(err),
     };
@@ -98,10 +101,13 @@ pub fn register_categories(id_documento: &Uuid, categories: Vec<Category>) -> Re
 
 #[cfg(test)]
 mod tests {
+    use rocket::tokio;
+
     use super::*;
     use std::str::FromStr;
 
-    fn test_register_categories() {
+    #[tokio::test]
+    async fn test_register_categories() {
         let document_id =
             Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
@@ -123,13 +129,14 @@ mod tests {
             },
         ];
 
-        match register_categories(&document_id, categorias) {
+        match register_categories(&document_id, categorias).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
     }
 
-    fn test_find_categories_by_document() {
+    #[tokio::test]
+    async fn test_find_categories_by_document() {
         let document_id =
             Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
@@ -151,18 +158,19 @@ mod tests {
             },
         ];
 
-        match register_categories(&document_id, categorias) {
+        match register_categories(&document_id, categorias).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
-        match find_categories_by_document(&document_id) {
+        match find_categories_by_document(&document_id).await {
             Ok(_) => (),
             Err(err) => panic!("Deu merda: {}", err),
         }
     }
 
-    fn test_delete_category() {
+    #[tokio::test]
+    async fn test_delete_category() {
         let document_id =
             Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
@@ -184,25 +192,26 @@ mod tests {
             },
         ];
 
-        match register_categories(&document_id, categorias) {
+        match register_categories(&document_id, categorias).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
-        let ret_cate = match find_categories_by_document(&document_id) {
+        let ret_cate = match find_categories_by_document(&document_id).await {
             Ok(v) => v,
             Err(err) => panic!("Deu merda: {}", err),
         };
 
         for c in ret_cate {
-            match delete_category(&c.id.unwrap()) {
+            match delete_category(&c.id.unwrap()).await {
                 Ok(_) => (),
                 Err(err) => panic!("Deu ruim: {}", err),
             }
         }
     }
 
-    fn test_delete_category_by_document() {
+    #[tokio::test]
+    async fn test_delete_category_by_document() {
         let document_id =
             Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
@@ -224,12 +233,12 @@ mod tests {
             },
         ];
 
-        match register_categories(&document_id, categorias) {
+        match register_categories(&document_id, categorias).await {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
         }
 
-        match delete_category_by_document(&document_id) {
+        match delete_category_by_document(&document_id).await {
             Ok(_) => (),
             Err(err) => panic!("Deu merda: {}", err),
         }

@@ -3,7 +3,7 @@ use postgres::{Client, Error, NoTls};
 use dotenvy::dotenv;
 use std::env;
 
-pub fn get_client() -> Result<Client, Error> {
+pub async fn get_client() -> Result<Client, Error> {
     dotenv().ok();
 
     let user_db = env::var("POSTGRES_USER").expect("Env com usuario do postgres não encontrado");
@@ -28,12 +28,13 @@ pub fn get_client() -> Result<Client, Error> {
 #[cfg(test)]
 mod tests {
     use postgres::{Client, NoTls};
+    use rocket::tokio;
 
     use super::*;
 
-    #[test]
-    fn test_get_client() {
-        let client = get_client();
+    #[tokio::test]
+    async fn test_get_client() {
+        let client = get_client().await;
         assert!(!client.unwrap().is_closed());
     }
 }
