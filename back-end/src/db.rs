@@ -1,9 +1,9 @@
-use postgres::{Client, NoTls};
+use postgres::{Client, Error, NoTls};
 
 use dotenvy::dotenv;
 use std::env;
 
-pub fn get_client() -> Client {
+pub fn get_client() -> Result<Client, Error> {
     dotenv().ok();
 
     let user_db = env::var("POSTGRES_USER").expect("Env com usuario do postgres não encontrado");
@@ -20,8 +20,8 @@ pub fn get_client() -> Client {
     );
 
     match Client::connect(&database_url, NoTls) {
-        Ok(valor) => valor,
-        Err(err) => panic!("Deu treta: {}", err),
+        Ok(valor) => Ok(valor),
+        Err(err) => Err(err),
     }
 }
 
@@ -34,6 +34,6 @@ mod tests {
     #[test]
     fn test_get_client() {
         let client = get_client();
-        assert!(!client.is_closed());
+        assert!(!client.unwrap().is_closed());
     }
 }

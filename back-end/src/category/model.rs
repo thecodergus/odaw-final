@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::db::get_client;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Category {
     id: Option<Uuid>,
     nome: String,
@@ -13,52 +13,71 @@ pub struct Category {
 }
 
 pub fn find_category(id: &Uuid) -> Result<Category, Error> {
-    match get_client().query_one("SELECT id, nome FROM categoria WHERE id='$1'", &[&id]) {
-        Ok(row) => Ok(Category {
-            id: Some(id.clone()),
-            nome: row.get(1),
-            id_documento: Some(row.get(2)),
-        }),
+    match get_client() {
+        Ok(mut client) => {
+            return match client.query_one("SELECT id, nome FROM categoria WHERE id='$1'", &[&id]) {
+                Ok(row) => Ok(Category {
+                    id: Some(id.clone()),
+                    nome: row.get(1),
+                    id_documento: Some(row.get(2)),
+                }),
+                Err(err) => Err(err),
+            }
+        }
         Err(err) => Err(err),
     }
 }
 
 pub fn find_categories_by_document(id_documento: &Uuid) -> Result<Vec<Category>, Error> {
-    match get_client().query(
-        "SELECT id, nome FROM categoria WHERE id_documento='$1'",
-        &[&id_documento],
-    ) {
-        Ok(ret) => Ok(ret
-            .into_iter()
-            .map(|r| Category {
-                id: r.get(0),
-                nome: r.get(1),
-                id_documento: Some(id_documento.clone()),
-            })
-            .collect()),
+    match get_client() {
+        Ok(mut client) => {
+            return match client.query(
+                "SELECT id, nome FROM categoria WHERE id_documento='$1'",
+                &[&id_documento],
+            ) {
+                Ok(ret) => Ok(ret
+                    .into_iter()
+                    .map(|r| Category {
+                        id: r.get(0),
+                        nome: r.get(1),
+                        id_documento: Some(id_documento.clone()),
+                    })
+                    .collect()),
+                Err(err) => Err(err),
+            }
+        }
         Err(err) => Err(err),
     }
 }
 
 pub fn delete_category(id: &Uuid) -> Result<(), Error> {
-    match get_client().query_one("DELETE FROM categeria WHERE id = $1", &[id]) {
-        Ok(_) => Ok(()),
+    match get_client() {
+        Ok(mut client) => match client.query_one("DELETE FROM categeria WHERE id = $1", &[id]) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        },
         Err(err) => Err(err),
     }
 }
 
 pub fn delete_category_by_document(id_documento: &Uuid) -> Result<(), Error> {
-    match get_client().query_one(
-        "DELETE FROM categeria WHERE id_documento = $1",
-        &[id_documento],
-    ) {
-        Ok(_) => Ok(()),
+    match get_client() {
+        Ok(mut client) => match client.query_one(
+            "DELETE FROM categeria WHERE id_documento = $1",
+            &[id_documento],
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        },
         Err(err) => Err(err),
     }
 }
 
 pub fn register_categories(id_documento: &Uuid, categories: Vec<Category>) -> Result<(), Error> {
-    let mut client: Client = get_client();
+    let mut client: Client = match get_client() {
+        Ok(c) => c,
+        Err(err) => return Err(err),
+    };
     let mut transaction: Transaction = match client.transaction() {
         Ok(t) => t,
         Err(err) => return Err(err),

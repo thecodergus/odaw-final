@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::db::get_client;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct User {
     pub id: Option<Uuid>,
     pub nome: String,
@@ -15,42 +15,57 @@ pub struct User {
 }
 
 pub fn find_user(email: String, password: String) -> Result<User, Error> {
-    match get_client().query_one(
-        "SELECT id, nome, data_de_nascimento FROM usuario WHERE email = $1 AND senha = $2 ",
-        &[&email, &password],
-    ) {
-        Ok(user) => Ok(User {
-            id: Some(user.get("id")),
-            nome: user.get("nome"),
-            email: Some(email.to_owned()),
-            senha: None,
-            data_de_nascimento: user.get("data_de_nascimento"),
-        }),
-        Err(err) => Err(err),
+    match get_client() {
+        Ok(mut client) => {
+            match client.query_one(
+                "SELECT id, nome, data_de_nascimento FROM usuario WHERE email = $1 AND senha = $2 ",
+                &[&email, &password],
+            ) {
+                Ok(user) => Ok(User {
+                    id: Some(user.get("id")),
+                    nome: user.get("nome"),
+                    email: Some(email.to_owned()),
+                    senha: None,
+                    data_de_nascimento: user.get("data_de_nascimento"),
+                }),
+                Err(err) => Err(err),
+            }
+        }
+        Err(err) => {
+            return Err(err);
+        }
     }
 }
 
 pub fn register_user(new_user: User) -> Result<(), Error> {
-    match get_client().execute(
-        "INSERT INTO usuario (nome, email, senha, data_de_nascimento) VALUES ($1, $2, $3, $4)",
-        &[
-            &new_user.nome,
-            &new_user.email,
-            &new_user.senha,
-            &new_user.data_de_nascimento,
-        ],
-    ) {
-        Ok(_) => Ok(()),
+    match get_client() {
+        Ok(mut client) => return match client.execute(
+            "INSERT INTO usuario (nome, email, senha, data_de_nascimento) VALUES ($1, $2, $3, $4)",
+            &[
+                &new_user.nome,
+                &new_user.email,
+                &new_user.senha,
+                &new_user.data_de_nascimento,
+            ],
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        },
         Err(err) => Err(err),
     }
 }
 
 pub fn update_user(user: User) -> Result<(), Error> {
-    match get_client().execute(
-        "UPDATE usuario SET nome = $1, email = $2, data_de_nascimento = $3 WHERE id = $4",
-        &[&user.nome, &user.email, &user.data_de_nascimento, &user.id],
-    ) {
-        Ok(_) => Ok(()),
+    match get_client() {
+        Ok(mut client) => {
+            return match client.execute(
+                "UPDATE usuario SET nome = $1, email = $2, data_de_nascimento = $3 WHERE id = $4",
+                &[&user.nome, &user.email, &user.data_de_nascimento, &user.id],
+            ) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err),
+            }
+        }
         Err(err) => Err(err),
     }
 }

@@ -7,7 +7,7 @@ use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub enum Type {
     CONTA,
     RECEITA,
@@ -42,45 +42,62 @@ pub struct Document {
 
 // Function to insert a document into the database
 pub fn insert_document(doc: &Document) -> Result<(), Error> {
-    match get_client().execute(
+    match get_client(){
+        Ok(mut client)=> return match client.execute(
         &format!("INSERT INTO documento (tipo_de_documento, valor, data, descricao, id_usuario) VALUES ('{}', '{}', $1, $2, $3)", doc.tipo_documento.to_string(), doc.valor.to_string()),
         &[&doc.data, &doc.descricao, &doc.id_usuario],
     ){
         Ok(_) => Ok(()),
         Err(err) => Err(err)
+    },
+    Err(err) => Err(err)
     }
 }
 
 // Function to update a document in the database
 pub fn update_document(doc: &Document) -> Result<(), Error> {
-    match get_client().execute(
+    match get_client(){
+        Ok(mut client) => return match client.execute(
         &format!("UPDATE documento SET tipo_de_documento = '{}', valor = '{}', data = $1, descricao = $2 WHERE id = $3", doc.tipo_documento.to_string(), doc.valor.to_string()),
         &[&doc.data, &doc.descricao, &doc.id],
     ){
         Ok(_) => Ok(()),
         Err(err) => Err(err)
+    },
+    Err(err) => Err(err)
     }
 }
 
 // Function to delete a document from the database
 pub fn delete_document(id: &Uuid) -> Result<(), Error> {
-    match get_client().execute("DELETE FROM documento WHERE id = $1", &[&id]) {
-        Ok(_) => Ok(()),
+    match get_client() {
+        Ok(mut client) => {
+            return match client.execute("DELETE FROM documento WHERE id = $1", &[&id]) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err),
+            }
+        }
         Err(err) => Err(err),
     }
 }
 
 pub fn find_document(id: &Uuid) -> Result<Document, Error> {
-    match get_client().query_one("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id = $1" , &[id]){
+    match get_client(){
+        Ok(mut client) => return match client.query_one("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id = $1" , &[id]){
         Ok(ret) => Ok(row_to_doc(ret)),
         Err(err) => Err(err)
+    },
+    Err(err) => Err(err)
     }
 }
 
 pub fn find_by_user(id: &Uuid) -> Result<Vec<Document>, Error> {
-    match get_client().query("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id_usuario = $1", &[id]) {
+    match get_client(){
+        Ok(mut client) => return match client.query("SELECT id, CAST(tipo_de_documento AS VARCHAR), CAST(valor AS VARCHAR), data, descricao, id_usuario FROM documento WHERE id_usuario = $1", &[id]) {
         Ok(ret) => Ok(ret.into_iter().map(row_to_doc).collect()),
         Err(err) => Err(err)
+    },
+    Err(err) => Err(err)
     }
 }
 
