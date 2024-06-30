@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS documentos (
     valor DECIMAL(12, 2) NOT NULL,
     data DATE NOT NULL,
     descricao TEXT,
-    id_usuario UUID REFERENCES usuarios(id)
+    id_usuario UUID REFERENCES usuarios(id) NOT NULL,
 );

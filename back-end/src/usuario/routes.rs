@@ -17,7 +17,7 @@ pub fn novo_usuario(novo_usuario: Json<NovoUsuario>) -> Json<RespontaGenerica> {
     match result {
         Ok(_) => Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            codigo: 201,
+            codigo: 200,
             mensagem: None,
         }),
         Err(err) => Json(RespontaGenerica {
