@@ -12,7 +12,7 @@ mod usuario;
 fn rocket() -> _ {
     rocket::build()
         .mount(
-            "/api",
+            "/api/usuario",
             routes![
                 usuario::routes::novo_usuario,
                 usuario::routes::atualizar_usuario
