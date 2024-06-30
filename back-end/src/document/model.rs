@@ -110,7 +110,7 @@ mod tests {
             valor: Decimal::from(100),
             data: NaiveDate::from_ymd_opt(2022, 1, 1).expect("Invalid date"),
             descricao: "Test document".to_string(),
-            id_usuario: Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
         match insert_document(&doc) {
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn test_find_document_by_user() {
         match find_by_user(
-            &Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         ) {
             Ok(_) => (),
             Err(err) => panic!("Deu ruim: {}", err),
@@ -137,7 +137,7 @@ mod tests {
             valor: Decimal::from(100),
             data: NaiveDate::from_ymd_opt(2022, 1, 1).expect("Invalid date"),
             descricao: "Test document".to_string(),
-            id_usuario: Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
         match insert_document(&doc) {
@@ -146,7 +146,7 @@ mod tests {
         }
 
         let doc_2 = match find_by_user(
-            &Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         ) {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),
@@ -168,7 +168,7 @@ mod tests {
             valor: Decimal::from(100),
             data: NaiveDate::from_ymd_opt(2022, 1, 1).expect("Invalid date"),
             descricao: "Test document".to_string(),
-            id_usuario: Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
         match insert_document(&doc) {
@@ -177,7 +177,7 @@ mod tests {
         }
 
         let doc_2 = match find_by_user(
-            &Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         ) {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),
@@ -205,7 +205,7 @@ mod tests {
             valor: Decimal::from(100),
             data: NaiveDate::from_ymd_opt(2022, 1, 1).expect("Invalid date"),
             descricao: "Test document".to_string(),
-            id_usuario: Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            id_usuario: Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         };
 
         match insert_document(&doc) {
@@ -214,7 +214,7 @@ mod tests {
         }
 
         let doc_2 = match find_by_user(
-            &Uuid::from_str("01fb7f56-0f79-457d-92d5-d5e41045b5f2").expect("não é uuid"),
+            &Uuid::from_str("99d9cc6f-a1f9-4f51-9b39-2a49e1a2323b").expect("não é uuid"),
         ) {
             Ok(v) => v.clone(),
             Err(err) => panic!("Deu ruim: {}", err),

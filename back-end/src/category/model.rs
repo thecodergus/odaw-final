@@ -84,7 +84,7 @@ mod tests {
 
     fn test_register_categories() {
         let document_id =
-            Uuid::from_str("7b79914b-306a-419f-a1b7-1034db7edba2").expect("não é uuid");
+            Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
         let categorias = vec![
             Category {
@@ -112,7 +112,7 @@ mod tests {
 
     fn test_find_categories_by_document() {
         let document_id =
-            Uuid::from_str("7b79914b-306a-419f-a1b7-1034db7edba2").expect("não é uuid");
+            Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
         let categorias = vec![
             Category {
@@ -145,7 +145,7 @@ mod tests {
 
     fn test_delete_category() {
         let document_id =
-            Uuid::from_str("7b79914b-306a-419f-a1b7-1034db7edba2").expect("não é uuid");
+            Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
         let categorias = vec![
             Category {
@@ -185,7 +185,7 @@ mod tests {
 
     fn test_delete_category_by_document() {
         let document_id =
-            Uuid::from_str("7b79914b-306a-419f-a1b7-1034db7edba2").expect("não é uuid");
+            Uuid::from_str("7209bb10-6a13-4224-b50e-a8992863c71b").expect("não é uuid");
 
         let categorias = vec![
             Category {

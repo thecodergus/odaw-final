@@ -10,5 +10,5 @@ use rocket::{routes, Build, Rocket};
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/user", routes![user::routes::create_user])
+    rocket::build().mount("/user", routes![])
 }
