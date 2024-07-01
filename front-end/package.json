@@ -18,6 +18,7 @@
     "axios": "^1.7.2",
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.3",
+    "svelte-chartjs": "^3.1.5",
     "svelte-routing": "^2.13.0",
     "svelte-tags-input": "^6.0.0"
   }

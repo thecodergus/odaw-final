@@ -5,9 +5,10 @@
   import Login from "./routes/Login.svelte";
   import Dashboard from "./routes/Dashboard.svelte";
   import Documento from "./routes/Documento.svelte";
+  import Contas from "./routes/Contas.svelte";
+  import Receitas from "./routes/Receitas.svelte";
 
   export let url = "";
-  let login = null;
 
   function logout() {
     usuario.set(null);
@@ -60,7 +61,8 @@
       </div>
     </nav>
     <Route path="/dashboard" component={Dashboard} />
-    <Route path="/contas" component={Documento} />
+    <Route path="/contas" component={Contas} />
+    <Route path="/receitas" component={Receitas} />
     <Route path="*" component={Dashboard} />
   {:else}
     <Route path="/cadastro" component={CadastroUsuario} />

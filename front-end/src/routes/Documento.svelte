@@ -1,122 +1,399 @@
 <script>
-    // @ts-nocheck
+  // @ts-nocheck
 
-    import Chart from "chart.js/auto";
-    import { onMount } from "svelte";
-    import Tags from "svelte-tags-input";
+  // import Chart from "chart.js/auto";
+  import { onMount } from "svelte";
+  import Tags from "svelte-tags-input";
+  import Modal from "../lib/Modal.svelte";
+  import Popup from "../lib/Popup.svelte";
+  import { gerar_cores_aleatorias, get_meses_entre } from "../services/utils";
+  import { Doughnut } from "svelte-chartjs";
 
-    import { DateInput } from "date-picker-svelte";
-    let data_inicio = new Date();
-    let data_fim = new Date();
+  import { DateInput } from "date-picker-svelte";
+  import {
+    deletar_documento,
+    get_categorias,
+    get_documentos,
+  } from "../services/api";
+  import { usuario } from "../services/store";
+  import { each } from "chart.js/helpers";
 
-    let resumoCanvas;
-    const data = {
-        labels: ["January", "February", "March", "April", "May"],
-        datasets: [
-            {
-                data: [50, 60, 70, 180, 190],
-                // backgroundColor: Object.values(Utils.CHART_COLORS),
-            },
-        ],
+  export let tipo_documento = "";
+  export let titulo_pagina = "";
+
+  // Datas
+  let data_inicio = new Date();
+  data_inicio.setMonth(data_inicio.getMonth() - 6);
+  let data_fim = new Date();
+  data_fim.setMonth(data_fim.getMonth() + 6);
+  const meses_ptbr = new Intl.DateTimeFormat("pt-BR", { month: "long" });
+
+  // Tags
+  let tags = [];
+
+  // Lista de Documentos
+  let documentos = [];
+
+  // Canvas
+  let chartRef;
+  let chartData = {};
+
+  // Popup
+  let popUpMostrar = false;
+  let popUpTitulo = "";
+  let popUpMensagem;
+
+  // Modais
+  let modalCriarDocumento = {
+    mostrar: false,
+    titulo: `Criar ${tipo_documento.toLowerCase()}`,
+    aoFechar: () => {
+      modalCriarDocumento.mostrar = false;
+    },
+    aoSalvar: () => {},
+    data: null,
+  };
+
+  let modalEditarDocumento = {
+    mostrar: false,
+    titulo: `Editar ${tipo_documento.toLowerCase()}`,
+    aoFechar: () => {
+      modalEditarDocumento.mostrar = false;
+    },
+    aoSalvar: () => {},
+    data: null,
+  };
+
+  let modalExcluirDocumento = {
+    mostrar: false,
+    titulo: `Excluir ${tipo_documento.toLowerCase()}`,
+    aoFechar: () => {
+      modalExcluirDocumento.mostrar = false;
+    },
+    aoSalvar: async () => {
+      try {
+        await deletar_documento(modalExcluirDocumento.data.id);
+      } catch (err) {
+        popUpTitulo = "Erro";
+        popUpMensagem = `Erro ao excluir documento: ${err}`;
+        popUpMostrar = true;
+      }
+      atualizar_tudo();
+      modalExcluirDocumento.mostrar = false;
+    },
+    data: null,
+  };
+
+  let modalVerDocumento = {
+    mostrar: false,
+    titulo: `Ver ${tipo_documento.toLowerCase()}`,
+    aoFechar: () => {
+      modalVerDocumento.mostrar = false;
+    },
+    aoSalvar: () => {},
+  };
+
+  // Canvas
+  let resumoChart = null;
+
+  // Funções
+  async function editar_documento(documento) {
+    modalEditarDocumento.mostrar = true;
+    modalEditarDocumento.data = documento;
+  }
+
+  async function excluir_documento(documento) {
+    modalExcluirDocumento.mostrar = true;
+    modalExcluirDocumento.data = documento;
+  }
+
+  async function ver_documento(documento) {
+    modalVerDocumento.mostrar = true;
+    modalVerDocumento.data = documento;
+  }
+
+  async function adicionar_documento() {
+    modalCriarDocumento.mostrar = false;
+  }
+
+  function escrever_data_cursivamente(data) {
+    const opcoes = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
+    const aux = new Intl.DateTimeFormat("pt-BR", opcoes);
 
-    onMount(() => {
-        const ctx = resumoCanvas.getContext("2d");
-        const resumoChart = new Chart(ctx, {
-            type: "doughnut",
-            data: data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: "top",
-                    },
-                    title: {
-                        display: true,
-                        text: "Chart.js Bar Chart",
-                    },
-                },
-            },
-        });
-    });
+    return aux.format(new Date(data));
+  }
+
+  async function atualizar_documentos() {
+    try {
+      const res = await get_documentos(usuario.get().id);
+
+      // Filtrando querendo apenas receitas ou contas e buscando as categorias de cada
+      documentos = await Promise.all(
+        res.data
+          .filter((i) => {
+            const atual = new Date(i.data);
+            const inicio = new Date(data_inicio);
+            const fim = new Date(data_fim);
+
+            return (
+              i.tipo_de_documento === tipo_documento &&
+              atual >= inicio &&
+              atual <= fim
+            );
+          })
+          .map(async (i) => {
+            try {
+              const categorias = await get_categorias(i.id);
+              i.categorias = categorias.data;
+            } catch (e) {
+              popUpTitulo = "Erro";
+              popUpMensagem = `Erro ao buscar categorias: ${e}`;
+              popUpMostrar = true;
+            }
+
+            return i;
+          })
+      );
+
+      // Filtrar pela questão categorias
+      if (tags.length > 0) {
+        documentos = documentos.filter((i) =>
+          i.categorias.some((i_) => tags.some((i__) => i_ === i__.nome))
+        );
+      }
+    } catch (err) {
+      popUpTitulo = "Erro";
+      popUpMensagem = `Erro ao buscar documentos: ${err}`;
+      popUpMostrar = true;
+    }
+  }
+
+  // Canvas
+
+  function atualizar_grafico() {
+    if (chartRef !== null) {
+      const meses_label = get_meses_entre(data_inicio, data_fim);
+      chartData = {
+        labels: meses_label.map(meses_ptbr.format),
+        datasets: [
+          {
+            data: meses_label.map((mes) => {
+              return documentos.filter((doc) => {
+                const data = new Date(doc.data);
+                return (
+                  data.getMonth() === mes.getMonth() &&
+                  data.getFullYear() === mes.getFullYear()
+                );
+              }).length;
+            }),
+          },
+        ],
+      };
+
+      chartRef.update();
+    }
+  }
+
+  async function atualizar_tudo() {
+    await atualizar_documentos();
+    await atualizar_grafico();
+  }
+
+  //Start
+  onMount(async () => {
+    await atualizar_tudo();
+  });
 </script>
 
 <div class="container">
-    <div class="row">
-        <h2>Minhas contas</h2>
+  <div class="row">
+    <h2>Minhas {titulo_pagina}</h2>
+    <button
+      class="btn btn-primary botao-amarelo"
+      on:click={() => (modalCriarDocumento.mostrar = true)}
+      >Criar {tipo_documento.toLowerCase()}</button
+    >
+  </div>
+  <div class="row">
+    <div class="col">
+      <label for="tags">Categorias</label>
+      <Tags
+        id={"tags"}
+        bind:tags
+        onTagAdded={atualizar_tudo}
+        onTagRemoved={atualizar_tudo}
+      />
     </div>
-    <div class="row">
-        <div class="col">
-            <Tags />
-        </div>
-        <div class="col-6">
-            <canvas
-                bind:this={resumoCanvas}
-                id="resumo"
-                width="600px"
-                height="400px"
-            />
-        </div>
-        <div class="col">
-            class:form-control
-            <div class="row">
-                <label for="data-inicio">Data Inicio</label>
-                <DateInput
-                    id={"data-inicio"}
-                    bind:value={data_inicio}
-                    format={"dd-MM-yyyy"}
-                    closeOnSelection={true}
-                />
-            </div>
-            <div class="row">
-                <label for="data-fim">Data Fim</label>
-                <DateInput
-                    id={"data-fim"}
-                    bind:value={data_fim}
-                    format={"dd-MM-yyyy"}
-                    closeOnSelection={true}
-                />
-            </div>
-        </div>
+    <div class="col-6">
+      <Doughnut
+        data={chartData}
+        options={{ responsive: true }}
+        bind:chart={chartRef}
+      />
     </div>
-    <div class="row">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th scope="col">Nome da Conta</th>
-                    <th scope="col">Categorias</th>
-                    <th scope="col">Opções</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <th scope="row">Remedio</th>
-                    <td>
-                        <span class="badge bg-secondary">Cat</span>
-                    </td>
-                    <td>
-                        <button class="btn btn-opcoes">Ver</button>
-                        <button class="btn btn-opcoes">Editar</button>
-                        <button class="btn btn-opcoes">Excluir</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="col">
+      <div class="row">
+        <label for="data-inicio">Data Inicio</label>
+        <DateInput
+          id={"data-inicio"}
+          bind:value={data_inicio}
+          format={"dd-MM-yyyy"}
+          closeOnSelection={true}
+          on:select={atualizar_tudo}
+        />
+      </div>
+      <div class="row">
+        <label for="data-fim">Data Fim</label>
+        <DateInput
+          id={"data-fim"}
+          bind:value={data_fim}
+          format={"dd-MM-yyyy"}
+          closeOnSelection={true}
+          on:select={atualizar_tudo}
+        />
+      </div>
     </div>
+  </div>
+  <div class="row">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">Nome da Conta</th>
+          <th scope="col">Categorias</th>
+          <th scope="col">Opções</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each documentos as doc}
+          <tr>
+            <th scope="row">{doc.descricao}</th>
+            <td>
+              {#each doc.categorias as cat}
+                <span class="badge bg-secondary">{cat.nome}</span>
+              {/each}
+            </td>
+            <td>
+              <button class="btn btn-opcoes" on:click={() => ver_documento(doc)}
+                >Ver</button
+              >
+              <button
+                class="btn btn-opcoes"
+                on:click={() => editar_documento(doc)}>Editar</button
+              >
+              <button
+                class="btn btn-opcoes"
+                on:click={() => excluir_documento(doc)}>Excluir</button
+              >
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </div>
 
+<Popup
+  message={popUpMensagem}
+  onClosed={() => (popUpMostrar = false)}
+  open={popUpMostrar}
+  title={popUpTitulo}
+/>
+
+<Modal
+  onClosed={modalCriarDocumento.aoFechar}
+  open={modalCriarDocumento.mostrar}
+  title={modalCriarDocumento.titulo}
+  onSave={modalCriarDocumento.aoSalvar}
+></Modal>
+<Modal
+  onClosed={modalVerDocumento.aoFechar}
+  open={modalVerDocumento.mostrar}
+  title={modalVerDocumento.titulo}
+  onSave={modalVerDocumento.aoSalvar}
+  showSalvar={false}
+>
+  {#if modalVerDocumento.data}
+    <div class="form-control">
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text" id="basic-addon3">Descrição:</span>
+          <input
+            type="text"
+            class="form-control"
+            id="basic-url"
+            aria-describedby="basic-addon3 basic-addon4"
+            value={modalVerDocumento.data.descricao}
+            disabled
+          />
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">R$</span>
+        <input
+          type="text"
+          class="form-control"
+          aria-label="Amount (to the nearest dollar)"
+          value={modalVerDocumento.data.valor}
+          disabled
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Data</span>
+        <input
+          type="text"
+          class="form-control"
+          aria-label="Amount (to the nearest dollar)"
+          value={escrever_data_cursivamente(modalVerDocumento.data.data)}
+          disabled
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Categorias</span>
+        <div class="input-group">
+          {#each modalVerDocumento.data.categorias as cat}
+            <span class="badge bg-secondary">{cat.nome}</span>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
+</Modal>
+
+<Modal
+  onClosed={modalEditarDocumento.aoFechar}
+  open={modalEditarDocumento.mostrar}
+  title={modalEditarDocumento.titulo}
+  onSave={modalEditarDocumento.aoSalvar}
+>
+  <h1>Opa</h1>
+</Modal>
+
+<Modal
+  onClosed={modalExcluirDocumento.aoFechar}
+  open={modalExcluirDocumento.mostrar}
+  title={modalExcluirDocumento.titulo}
+  onSave={modalExcluirDocumento.aoSalvar}
+>
+  <h1>Tem certeza que deseja excluir? Clique em salvar</h1>
+</Modal>
+
 <style>
-    div .row {
-        margin-top: 10px;
-    }
-    .btn-opcoes {
-        background: none !important;
-        border: none;
-        padding: 0 !important;
-        font-family: Arial, sans-serif;
-        color: #069;
-        text-decoration: underline;
-        cursor: pointer;
-        margin-left: 5px;
-    }
+  div .row {
+    margin-top: 10px;
+  }
+  .btn-opcoes {
+    background: none !important;
+    border: none;
+    padding: 0 !important;
+    font-family: Arial, sans-serif;
+    color: #069;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 5px;
+  }
 </style>

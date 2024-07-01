@@ -4,40 +4,20 @@
   import { get_documentos } from "../services/api";
   import { usuario } from "../services/store";
   import Popup from "../lib/Popup.svelte";
+  import {
+    calcular_valor_total_mes,
+    get_meses_a_partir,
+  } from "../services/utils";
 
   let resumoCanvas;
   let popUpMostrar = false;
   let popUpTitle = "";
   let popUpMensagem = "";
 
-  function calcular_valor_total_mes(valores, mes) {
-    const mes_atual = mes.getMonth();
-    return valores.reduce((acc, v) => {
-      try {
-        const data = new Date(v.data);
-        const valor = v.valor;
-        if (data.getMonth() === mes_atual) {
-          return acc + parseFloat(valor);
-        }
-      } catch (err) {
-        return acc;
-      }
-      return acc;
-    }, 0);
-  }
-
   onMount(async () => {
     // Arrumando datas
-    const data_atual = new Date();
-    const anterior_mes_2 = new Date(data_atual);
-    anterior_mes_2.setMonth(anterior_mes_2.getMonth() - 2);
-    const anterior_mes_1 = new Date(data_atual);
-    anterior_mes_1.setMonth(anterior_mes_1.getMonth() - 1);
-    const proximo_mes_1 = new Date(data_atual);
-    proximo_mes_1.setMonth(proximo_mes_1.getMonth() + 1);
-    const proximo_mes_2 = new Date(data_atual);
-    proximo_mes_2.setMonth(proximo_mes_2.getMonth() + 2);
-    const meses = new Intl.DateTimeFormat("pt-BR", { month: "long" });
+    const meses = get_meses_a_partir(new Date(), 2);
+    const meses_ptbr = new Intl.DateTimeFormat("pt-BR", { month: "long" });
 
     let receitas = [];
     let contas = [];
@@ -52,23 +32,11 @@
     }
 
     const data = {
-      labels: [
-        meses.format(anterior_mes_2),
-        meses.format(anterior_mes_1),
-        meses.format(data_atual),
-        meses.format(proximo_mes_1),
-        meses.format(proximo_mes_2),
-      ],
+      labels: meses.map(meses_ptbr.format),
       datasets: [
         {
           label: "Contas",
-          data: [
-            -calcular_valor_total_mes(contas, anterior_mes_2),
-            -calcular_valor_total_mes(contas, anterior_mes_1),
-            -calcular_valor_total_mes(contas, data_atual),
-            -calcular_valor_total_mes(contas, proximo_mes_1),
-            -calcular_valor_total_mes(contas, proximo_mes_2),
-          ],
+          data: meses.map((m) => -calcular_valor_total_mes(contas, m)),
           borderColor: "red",
           backgroundColor: "rgba(255, 0, 0, 0.5)",
           borderWidth: 2,
@@ -77,13 +45,7 @@
         },
         {
           label: "Receitas",
-          data: [
-            calcular_valor_total_mes(receitas, anterior_mes_2),
-            calcular_valor_total_mes(receitas, anterior_mes_1),
-            calcular_valor_total_mes(receitas, data_atual),
-            calcular_valor_total_mes(receitas, proximo_mes_1),
-            calcular_valor_total_mes(receitas, proximo_mes_2),
-          ],
+          data: meses.map((m) => calcular_valor_total_mes(receitas, m)),
           borderColor: "blue",
           backgroundColor: "rgba(0, 0, 255, 0.5)",
           borderWidth: 2,
@@ -104,7 +66,7 @@
           },
           title: {
             display: true,
-            text: "Chart.js Bar Chart",
+            text: "",
           },
         },
       },

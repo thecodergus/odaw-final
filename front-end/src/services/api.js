@@ -19,8 +19,8 @@ async function put(caminho, parametros) {
         headers: headers
     });
 }
-async function delete_(caminho, parametros) {
-    return await axios.delete(`${API_URL}/${caminho}/`, { headers: headers });
+async function delete_(caminho) {
+    return await axios.delete(`${API_URL}/${caminho}`);
 }
 
 export async function fazer_login(email, senha) {
@@ -41,4 +41,12 @@ export async function cadastrar_usuario(nome, senha, email, data_de_nascimento) 
 
 export async function get_documentos(id_usuario) {
     return get(`documento/usuario/${id_usuario}`)
+}
+
+export async function get_categorias(id_documento){
+    return get(`categoria/documento/${id_documento}`)
+}
+
+export async function deletar_documento(id_documento){
+    return delete_(`documento/${id_documento}`)
 }
