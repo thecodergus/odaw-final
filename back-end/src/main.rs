@@ -49,6 +49,7 @@ fn make_cors() -> Cors {
             "Authorization",
             "Accept",
             "Access-Control-Allow-Origin", // 6.
+            "Content-Type",
         ]),
         allow_credentials: true,
         ..Default::default()
