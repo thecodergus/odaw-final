@@ -1,6 +1,9 @@
 <script>
     import Popup from "../lib/Popup.svelte";
     import { validarEmail } from "../utils";
+    import { Link, navigate } from "svelte-routing";
+    import { fazer_login } from "../services/api";
+    import { usuario } from "../services/store";
 
     // Campos proprios
     let email = "";
@@ -22,10 +25,17 @@
     function verificarCampos() {
         if ([email, senha].some((i) => i === "")) {
             abrirPopup("Nenhum campo pode estar vazio");
-        }
-
-        if (validarEmail(email) === false) {
+        } else if (validarEmail(email) === false) {
             abrirPopup("O e-mail precisar ser valido!");
+        } else {
+            fazer_login(email, senha)
+                .then((res) => {
+                    usuario.set(res.data);
+                    navigate("/dashboard", { replace: true });
+                })
+                .catch((err) => {
+                    abrirPopup(err.response.data.mensagem);
+                });
         }
     }
 </script>
@@ -71,8 +81,12 @@
             >
         </div>
         <div class="row">
-            <button type="button" class="btn btn-primary botao-preto"
-                >Registrar-se</button
+            <button
+                type="button"
+                class="btn btn-primary botao-preto"
+                on:click={() => {
+                    navigate("/cadastro", { replace: true });
+                }}>Registrar-se</button
             >
         </div>
     </form>

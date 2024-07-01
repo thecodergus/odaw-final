@@ -58,12 +58,14 @@
             />
         </div>
         <div class="col">
+            class:form-control
             <div class="row">
                 <label for="data-inicio">Data Inicio</label>
                 <DateInput
                     id={"data-inicio"}
                     bind:value={data_inicio}
                     format={"dd-MM-yyyy"}
+                    closeOnSelection={true}
                 />
             </div>
             <div class="row">
@@ -72,6 +74,7 @@
                     id={"data-fim"}
                     bind:value={data_fim}
                     format={"dd-MM-yyyy"}
+                    closeOnSelection={true}
                 />
             </div>
         </div>

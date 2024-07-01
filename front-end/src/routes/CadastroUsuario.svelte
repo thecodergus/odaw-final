@@ -2,11 +2,15 @@
     // Importe a variável reativa do Svelte
     import Popup from "../lib/Popup.svelte";
     import { validarEmail } from "../utils";
+    import { cadastrar_usuario } from "../services/api";
+    import { DateInput } from "date-picker-svelte";
+    import { navigate } from "svelte-routing";
 
     // Crie variáveis reativas para os campos
     let nome = "";
     let email = "";
     let senha = "";
+    let data_de_nascimento = new Date();
     let confirmarSenha = "";
     let popupVisivel = false;
     let popupMensagem = "";
@@ -16,14 +20,23 @@
     function verificarCampos() {
         if (senha !== confirmarSenha) {
             abrirPopup("As senhas não coincidem. Por favor, tente novamente.");
-        }
-
-        if ([nome, email, senha, confirmarSenha].some((i) => i === "")) {
+        } else if ([nome, email, senha, confirmarSenha].some((i) => i === "")) {
             abrirPopup("Os campos não podem ficar em branco!");
-        }
-
-        if (validarEmail(email) === false) {
+        } else if (validarEmail(email) === false) {
             abrirPopup("O e-mail precisa ser valido!");
+        } else {
+            cadastrar_usuario(
+                nome,
+                senha,
+                email,
+                data_de_nascimento.toISOString().split("T")[0],
+            )
+                .then(() => {
+                    navigate("/login", { replace: true });
+                })
+                .catch((err) => {
+                    abrirPopup(err.response.data.mensagem);
+                });
         }
     }
 
@@ -74,6 +87,22 @@
                     id="cadastroEmail"
                     aria-describedby="emailHelp"
                     bind:value={email}
+                />
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="row">
+                <label for="cadastroData" class="form-label"
+                    >Data de Nascimento</label
+                >
+            </div>
+            <div class="row">
+                <DateInput
+                    id={"cadastroData"}
+                    bind:value={data_de_nascimento}
+                    format={"dd-MM-yyyy"}
+                    min={new Date(1900, 0, 1)}
+                    closeOnSelection={true}
                 />
             </div>
         </div>
