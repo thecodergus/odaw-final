@@ -1,12 +1,14 @@
-use diesel::prelude::*;
-use rocket::serde::json::Json; // Add this line
-
 use crate::{responses::RespontaGenerica, schema::usuarios};
+use diesel::prelude::*;
+use rocket::response::status;
+use rocket::serde::json::Json; // Add this line
 
 use super::model::{AtualizarUsuario, CredenciaisUsuario, NovoUsuario, Usuario};
 
 #[post("/", format = "json", data = "<novo_usuario>")]
-pub fn novo_usuario(novo_usuario: Json<NovoUsuario>) -> Json<RespontaGenerica> {
+pub fn novo_usuario(
+    novo_usuario: Json<NovoUsuario>,
+) -> Result<status::Accepted<Json<RespontaGenerica>>, status::Conflict<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
     let usuario = novo_usuario.into_inner();
 
@@ -15,23 +17,21 @@ pub fn novo_usuario(novo_usuario: Json<NovoUsuario>) -> Json<RespontaGenerica> {
         .execute(&mut connection);
 
     match result {
-        Ok(_) => Json(RespontaGenerica {
+        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            codigo: 200,
             mensagem: None,
-        }),
-        Err(err) => Json(RespontaGenerica {
+        }))),
+        Err(err) => Err(status::Conflict(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao inserir usuário: {:?}", err)),
-        }),
+        }))),
     }
 }
 
 #[post("/", format = "json", data = "<credenciais>")]
 pub fn fazer_login(
     credenciais: Json<CredenciaisUsuario>,
-) -> Result<Json<Usuario>, Json<RespontaGenerica>> {
+) -> Result<status::Accepted<Json<Usuario>>, status::NotFound<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
     let login = credenciais.into_inner();
 
@@ -41,19 +41,18 @@ pub fn fazer_login(
         .first::<Usuario>(&mut connection);
 
     match usuario {
-        Ok(usuario) => Ok(Json(usuario)),
-        Err(err) => Err(Json(RespontaGenerica {
+        Ok(usuario) => Ok(status::Accepted(Json(usuario))),
+        Err(err) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao fazer login: {:?}", err)),
-        })),
+        }))),
     }
 }
 
 #[patch("/", format = "json", data = "<atualizar_usuario>")]
 pub fn atualizar_usuario(
     atualizar_usuario: Json<AtualizarUsuario>,
-) -> Result<Json<Usuario>, Json<RespontaGenerica>> {
+) -> Result<status::Accepted<Json<Usuario>>, status::Conflict<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
     let usuario = atualizar_usuario.into_inner();
 
@@ -62,11 +61,10 @@ pub fn atualizar_usuario(
         .get_result::<Usuario>(&mut connection);
 
     match result {
-        Ok(usuario) => Ok(Json(usuario)),
-        Err(err) => Err(Json(RespontaGenerica {
+        Ok(usuario) => Ok(status::Accepted(Json(usuario))),
+        Err(err) => Err(status::Conflict(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao atualizar usuário: {:?}", err)),
-        })),
+        }))),
     }
 }

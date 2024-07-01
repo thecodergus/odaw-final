@@ -1,14 +1,14 @@
-use std::str::FromStr;
-
 use super::model::{AtualizarDocumento, Documento, NovoDocumento};
-
 use crate::responses::RespontaGenerica;
 use crate::schema::{categorias, documentos};
 use diesel::prelude::*;
+use rocket::response::status;
 use rocket::serde::json::Json;
 
 #[post("/", format = "json", data = "<documento>")]
-pub fn criar_documento(documento: Json<NovoDocumento>) -> Json<RespontaGenerica> {
+pub fn criar_documento(
+    documento: Json<NovoDocumento>,
+) -> Result<status::Accepted<Json<RespontaGenerica>>, status::Conflict<Json<RespontaGenerica>>> {
     let documento = documento.into_inner();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -17,21 +17,21 @@ pub fn criar_documento(documento: Json<NovoDocumento>) -> Json<RespontaGenerica>
         .execute(&mut connection);
 
     match result {
-        Ok(_) => Json(RespontaGenerica {
+        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            codigo: 200,
             mensagem: None,
-        }),
-        Err(err) => Json(RespontaGenerica {
+        }))),
+        Err(err) => Err(status::Conflict(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao inserir documento: {:?}", err)),
-        }),
+        }))),
     }
 }
 
 #[get("/<id_documento>", format = "json")]
-pub fn obter_documento(id_documento: String) -> Result<Json<Documento>, Json<RespontaGenerica>> {
+pub fn obter_documento(
+    id_documento: String,
+) -> Result<status::Accepted<Json<Documento>>, status::NotFound<Json<RespontaGenerica>>> {
     let id_documento = uuid::Uuid::parse_str(&id_documento).unwrap();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -40,19 +40,18 @@ pub fn obter_documento(id_documento: String) -> Result<Json<Documento>, Json<Res
         .first::<Documento>(&mut connection);
 
     match documento {
-        Ok(documento) => Ok(Json(documento)),
-        Err(err) => Err(Json(RespontaGenerica {
+        Ok(documento) => Ok(status::Accepted(Json(documento))),
+        Err(err) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao obter documento: {:?}", err)),
-        })),
+        }))),
     }
 }
 
 #[get("/usuario/<id_usuario>", format = "json")]
 pub fn obter_documentos(
     id_usuario: String,
-) -> Result<Json<Vec<Documento>>, Json<RespontaGenerica>> {
+) -> Result<status::Accepted<Json<Vec<Documento>>>, status::NotFound<Json<RespontaGenerica>>> {
     let id_usuario = uuid::Uuid::parse_str(&id_usuario).unwrap();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -61,17 +60,18 @@ pub fn obter_documentos(
         .load::<Documento>(&mut connection);
 
     match documentos {
-        Ok(documentos) => Ok(Json(documentos)),
-        Err(err) => Err(Json(RespontaGenerica {
+        Ok(documentos) => Ok(status::Accepted(Json(documentos))),
+        Err(err) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao obter documentos: {:?}", err)),
-        })),
+        }))),
     }
 }
 
 #[put("/", format = "json", data = "<documento>")]
-pub fn atualizar_documento(documento: Json<AtualizarDocumento>) -> Json<RespontaGenerica> {
+pub fn atualizar_documento(
+    documento: Json<AtualizarDocumento>,
+) -> Result<status::Accepted<Json<RespontaGenerica>>, status::BadRequest<Json<RespontaGenerica>>> {
     let documento = documento.into_inner();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -80,21 +80,21 @@ pub fn atualizar_documento(documento: Json<AtualizarDocumento>) -> Json<Responta
         .execute(&mut connection);
 
     match result {
-        Ok(_) => Json(RespontaGenerica {
+        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            codigo: 200,
             mensagem: None,
-        }),
-        Err(err) => Json(RespontaGenerica {
+        }))),
+        Err(err) => Err(status::BadRequest(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao atualizar documento: {:?}", err)),
-        }),
+        }))),
     }
 }
 
 #[delete("/<id_documento>", format = "json")]
-pub fn deletar_documento(id_documento: String) -> Json<RespontaGenerica> {
+pub fn deletar_documento(
+    id_documento: String,
+) -> Result<status::Accepted<Json<RespontaGenerica>>, status::NotFound<Json<RespontaGenerica>>> {
     let id_documento = uuid::Uuid::parse_str(&id_documento).unwrap();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -104,28 +104,25 @@ pub fn deletar_documento(id_documento: String) -> Json<RespontaGenerica> {
             .execute(&mut connection);
 
     if let Err(err) = result {
-        return Json(RespontaGenerica {
+        return Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!(
                 "Erro ao deletar categorias associadas ao documento: {:?}",
                 err
             )),
-        });
+        })));
     }
 
     let result_ = diesel::delete(documentos::table.find(id_documento)).execute(&mut connection);
 
     match result_ {
-        Ok(_) => Json(RespontaGenerica {
+        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            codigo: 200,
             mensagem: None,
-        }),
-        Err(err) => Json(RespontaGenerica {
+        }))),
+        Err(err) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            codigo: 500,
             mensagem: Some(format!("Erro ao deletar documento: {:?}", err)),
-        }),
+        }))),
     }
 }
