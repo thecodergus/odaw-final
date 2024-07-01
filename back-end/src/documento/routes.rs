@@ -2,6 +2,7 @@ use super::model::{AtualizarDocumento, Documento, NovoDocumento};
 use crate::responses::RespontaGenerica;
 use crate::schema::{categorias, documentos};
 use diesel::prelude::*;
+use diesel::sql_types::Uuid;
 use rocket::response::status;
 use rocket::serde::json::Json;
 
@@ -91,12 +92,14 @@ pub fn atualizar_documento(
     }
 }
 
-#[delete("/<id_documento>", format = "json")]
+#[delete("/<id_document>")]
 pub fn deletar_documento(
-    id_documento: String,
+    id_document: String,
 ) -> Result<status::Accepted<Json<RespontaGenerica>>, status::NotFound<Json<RespontaGenerica>>> {
-    let id_documento = uuid::Uuid::parse_str(&id_documento).unwrap();
     let mut connection = crate::db::estabelecer_conexao();
+    let id_documento = uuid::Uuid::parse_str(&id_document).expect("Erro ao converter id");
+
+    println!("id_documento: {:?}", id_documento);
 
     // Deletar todas as categorias associadas ao documento
     let result =
@@ -113,12 +116,13 @@ pub fn deletar_documento(
         })));
     }
 
-    let result_ = diesel::delete(documentos::table.find(id_documento)).execute(&mut connection);
+    let result_ = diesel::delete(documentos::table.filter(documentos::id.eq(id_documento)))
+        .execute(&mut connection);
 
     match result_ {
-        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
+        Ok(msg) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            mensagem: None,
+            mensagem: Some(format!("Documento deletado com sucesso: {:?}", msg)),
         }))),
         Err(err) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
