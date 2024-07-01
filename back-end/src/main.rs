@@ -35,7 +35,16 @@ fn make_cors() -> Cors {
     CorsOptions {
         // 5.
         allowed_origins,
-        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(), // 1.
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Patch,
+            Method::Delete,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(), // 1.
         allowed_headers: AllowedHeaders::some(&[
             "Authorization",
             "Accept",
