@@ -62,7 +62,7 @@ pub fn fazer_login(
     }
 }
 
-#[patch("/", format = "json", data = "<atualizar_usuario>")]
+#[put("/", format = "json", data = "<atualizar_usuario>")]
 pub fn atualizar_usuario(
     atualizar_usuario: Json<AtualizarUsuario>,
 ) -> Result<status::Accepted<Json<Usuario>>, status::Conflict<Json<RespontaGenerica>>> {
