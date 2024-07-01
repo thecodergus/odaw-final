@@ -32,6 +32,7 @@
                 .then((res) => {
                     usuario.set(res.data);
                     navigate("/dashboard", { replace: true });
+                    location.reload();
                 })
                 .catch((err) => {
                     abrirPopup(err.response.data.mensagem);

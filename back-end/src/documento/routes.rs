@@ -8,7 +8,7 @@ use rocket::serde::json::Json;
 #[post("/", format = "json", data = "<documento>")]
 pub fn criar_documento(
     documento: Json<NovoDocumento>,
-) -> Result<status::Accepted<Json<RespontaGenerica>>, status::Conflict<Json<RespontaGenerica>>> {
+) -> Result<status::Accepted<Json<RespontaGenerica>>, status::BadRequest<Json<RespontaGenerica>>> {
     let documento = documento.into_inner();
     let mut connection = crate::db::estabelecer_conexao();
 
@@ -21,7 +21,7 @@ pub fn criar_documento(
             status: "sucesso".to_string(),
             mensagem: None,
         }))),
-        Err(err) => Err(status::Conflict(Json(RespontaGenerica {
+        Err(err) => Err(status::BadRequest(Json(RespontaGenerica {
             status: "erro".to_string(),
             mensagem: Some(format!("Erro ao inserir documento: {:?}", err)),
         }))),

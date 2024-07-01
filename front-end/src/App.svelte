@@ -1,5 +1,5 @@
 <script>
-  import { Router, Link, Route, link } from "svelte-routing";
+  import { Router, Link, Route, link, navigate } from "svelte-routing";
   import { usuario } from "./services/store";
   import CadastroUsuario from "./routes/CadastroUsuario.svelte";
   import Login from "./routes/Login.svelte";
@@ -8,6 +8,12 @@
 
   export let url = "";
   let login = null;
+
+  function logout() {
+    usuario.set(null);
+    navigate("/login", { replace: true });
+    location.reload();
+  }
 </script>
 
 <Router {url}>
@@ -31,7 +37,7 @@
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav">
             <a
-              class={"nav-link active"}
+              class={"nav-link"}
               aria-current="page"
               href="/dashboard"
               use:link
@@ -44,8 +50,10 @@
               >Minhas Receitas</a
             >
             <a class={"nav-link"} href="/perfil" use:link replace>Meu Perfil</a>
-            <button class="button-link nav-link sair-link" type="button"
-              >Sair</button
+            <button
+              class="button-link nav-link sair-link"
+              type="button"
+              on:click={logout}>Sair</button
             >
           </div>
         </div>
@@ -80,5 +88,6 @@
     position: absolute;
     right: 0;
     background-color: #ffc02f;
+    color: rgb(38, 46, 58);
   }
 </style>

@@ -38,3 +38,7 @@ export async function cadastrar_usuario(nome, senha, email, data_de_nascimento) 
         data_de_nascimento
     })
 }
+
+export async function get_documentos(id_usuario) {
+    return get(`documento/usuario/${id_usuario}`)
+}
