@@ -1,7 +1,7 @@
 use crate::{responses::RespontaGenerica, schema::usuarios};
 use diesel::prelude::*;
-use rocket::response::status;
-use rocket::serde::json::Json; // Add this line
+use rocket::serde::json::Json;
+use rocket::{http::hyper::server::conn, response::status}; // Add this line
 
 use super::model::{AtualizarUsuario, CredenciaisUsuario, NovoUsuario, Usuario};
 
@@ -11,6 +11,17 @@ pub fn novo_usuario(
 ) -> Result<status::Accepted<Json<RespontaGenerica>>, status::Conflict<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
     let usuario = novo_usuario.into_inner();
+
+    let procurar = usuarios::table
+        .filter(usuarios::email.eq(&usuario.email))
+        .first::<Usuario>(&mut connection);
+
+    if let Ok(_) = procurar {
+        return Err(status::Conflict(Json(RespontaGenerica {
+            status: "erro".to_string(),
+            mensagem: Some(format!("Erro ao inserir usuário: email já cadastrado")),
+        })));
+    }
 
     let result = diesel::insert_into(usuarios::table)
         .values(&usuario)
@@ -42,9 +53,11 @@ pub fn fazer_login(
 
     match usuario {
         Ok(usuario) => Ok(status::Accepted(Json(usuario))),
-        Err(err) => Err(status::NotFound(Json(RespontaGenerica {
+        Err(_) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
-            mensagem: Some(format!("Erro ao fazer login: {:?}", err)),
+            mensagem: Some(format!(
+                "Erro ao fazer login: Nenhum usuario com este e-mail e senha foi encontrado!"
+            )),
         }))),
     }
 }
