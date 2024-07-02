@@ -106,7 +106,7 @@ pub fn deletar_categoria(
     }
 }
 
-#[delete("/<id_documento>", format = "json")]
+#[delete("/documento/<id_documento>")]
 pub fn deletar_categorias(
     id_documento: String,
 ) -> Result<status::Accepted<Json<RespontaGenerica>>, status::NotFound<Json<RespontaGenerica>>> {
