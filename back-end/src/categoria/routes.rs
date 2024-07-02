@@ -85,7 +85,7 @@ pub fn obter_categorias(
     }
 }
 
-#[delete("/<id_categoria>", format = "json")]
+#[delete("/<id_categoria>")]
 pub fn deletar_categoria(
     id_categoria: String,
 ) -> Result<status::Accepted<Json<RespontaGenerica>>, status::NotFound<Json<RespontaGenerica>>> {

@@ -85,7 +85,9 @@ fn rocket() -> _ {
             routes![
                 categoria::routes::nova_categoria,
                 categoria::routes::obter_categorias,
-                categoria::routes::obter_categoria
+                categoria::routes::obter_categoria,
+                categoria::routes::deletar_categoria,
+                categoria::routes::deletar_categorias
             ],
         )
         .attach(make_cors())
