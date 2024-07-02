@@ -1,5 +1,6 @@
 use crate::{responses::RespontaGenerica, schema::usuarios};
 use diesel::prelude::*;
+use diesel::sql_types::Uuid;
 use rocket::serde::json::Json;
 use rocket::{http::hyper::server::conn, response::status}; // Add this line
 
@@ -78,6 +79,26 @@ pub fn atualizar_usuario(
         Err(err) => Err(status::Conflict(Json(RespontaGenerica {
             status: "erro".to_string(),
             mensagem: Some(format!("Erro ao atualizar usuário: {:?}", err)),
+        }))),
+    }
+}
+
+#[get("/<id_usuario>")]
+pub fn buscar_usuario(
+    id_usuario: String,
+) -> Result<status::Accepted<Json<Usuario>>, status::NotFound<Json<RespontaGenerica>>> {
+    let mut connection = crate::db::estabelecer_conexao();
+    let id = uuid::Uuid::parse_str(&id_usuario).unwrap();
+
+    let usuario = usuarios::table.find(id).first::<Usuario>(&mut connection);
+
+    match usuario {
+        Ok(usuario) => Ok(status::Accepted(Json(usuario))),
+        Err(_) => Err(status::NotFound(Json(RespontaGenerica {
+            status: "erro".to_string(),
+            mensagem: Some(format!(
+                "Erro ao buscar usuário: Nenhum usuário com este id foi encontrado!"
+            )),
         }))),
     }
 }

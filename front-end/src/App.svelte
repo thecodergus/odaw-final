@@ -7,6 +7,7 @@
   import Documento from "./routes/Documento.svelte";
   import Contas from "./routes/Contas.svelte";
   import Receitas from "./routes/Receitas.svelte";
+  import AtualiarUsuario from "./routes/AtualiarUsuario.svelte";
 
   export let url = "";
 
@@ -63,6 +64,7 @@
     <Route path="/dashboard" component={Dashboard} />
     <Route path="/contas" component={Contas} />
     <Route path="/receitas" component={Receitas} />
+    <Route path="/perfil" component={AtualiarUsuario} />
     <Route path="*" component={Dashboard} />
   {:else}
     <Route path="/cadastro" component={CadastroUsuario} />

@@ -65,7 +65,8 @@ fn rocket() -> _ {
             "/api/usuario",
             routes![
                 usuario::routes::novo_usuario,
-                usuario::routes::atualizar_usuario
+                usuario::routes::atualizar_usuario,
+                usuario::routes::buscar_usuario,
             ],
         )
         .mount("/api/login", routes![usuario::routes::fazer_login])

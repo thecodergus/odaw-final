@@ -71,3 +71,17 @@ export async function cadastrar_documento(tipo_de_documento, descricao, valor, d
         id_usuario        
     })
 }   
+
+export async function atualizar_usuario(id_usuario, nome, senha, email, data_de_nascimento){
+    return put(`usuario`, {
+        id: id_usuario,
+        nome,
+        senha,
+        email,
+        data_de_nascimento
+    })
+}
+
+export async function get_usuario(id_usuario){
+    return get(`usuario/${id_usuario}`)
+}
