@@ -16,6 +16,8 @@
     get_documentos,
     atualizar_documento,
     cadastrar_documento,
+    cadastrar_categoria,
+    deletar_categoria,
   } from "../services/api";
   import { usuario } from "../services/store";
   import { each } from "chart.js/helpers";
@@ -95,6 +97,12 @@
           modalEditarDocumento.data.data.toISOString().split("T")[0],
           modalEditarDocumento.data.id_usuario
         );
+
+        await Promise.all(
+          modalEditarDocumento.data.categorias.map(async (cat) => {
+            await cadastrar_categoria(modalEditarDocumento.data.id, cat);
+          })
+        );
       } catch (err) {
         modalEditarDocumento.mostrar = false;
         popUpTitulo = "Erro";
@@ -156,6 +164,9 @@
   async function editar_documento(documento) {
     modalEditarDocumento.mostrar = true;
     modalEditarDocumento.data = documento;
+    modalEditarDocumento.data.categorias = documento.categorias.map(
+      (i) => i.nome
+    );
   }
 
   async function excluir_documento(documento) {
@@ -223,11 +234,12 @@
             return i;
           })
       );
-
       // Filtrar pela questão categorias
       if (tags.length > 0) {
         documentos = documentos.filter((i) =>
-          i.categorias.some((i_) => tags.some((i__) => i_ === i__.nome))
+          i.categorias.some((i_) =>
+            tags.some((i__) => i_.nome.toLowerCase() === i__.toLowerCase())
+          )
         );
       }
     } catch (err) {
@@ -272,6 +284,23 @@
   onMount(async () => {
     await atualizar_tudo();
   });
+
+  async function remover_categoria(id_documento) {
+    try {
+      const response = await get_categorias(id_documento);
+      const categoria = response.data.find(
+        (i) => !modalEditarDocumento.data.categorias.includes(i.nome)
+      );
+
+      if (categoria) {
+        await deletar_categoria(categoria.id);
+      }
+    } catch (err) {
+      popUpTitulo = "Erro";
+      popUpMensagem = `Erro ao deletar categoria: ${err}`;
+      popUpMostrar = true;
+    }
+  }
 </script>
 
 <div class="container">
@@ -405,14 +434,14 @@
           on:select={atualizar_tudo}
         />
       </div>
-      <div class="input-group mb-3">
+      <!-- <div class="input-group mb-3">
         <span class="input-group-text">Categorias</span>
         <div class="input-group">
           {#each modalCriarDocumento.data.categorias as cat}
             <span class="badge bg-secondary">{cat.nome}</span>
           {/each}
         </div>
-      </div>
+      </div> -->
     </div>
   {/if}
 </Modal>
@@ -512,11 +541,11 @@
       </div>
       <div class="input-group mb-3">
         <span class="input-group-text">Categorias</span>
-        <div class="input-group">
-          {#each modalEditarDocumento.data.categorias as cat}
-            <span class="badge bg-secondary">{cat.nome}</span>
-          {/each}
-        </div>
+        <Tags
+          id={"tag-input"}
+          bind:tags={modalEditarDocumento.data.categorias}
+          onTagRemoved={() => remover_categoria(modalEditarDocumento.data.id)}
+        />
       </div>
     </div>
   {/if}
@@ -544,5 +573,11 @@
     text-decoration: underline;
     cursor: pointer;
     margin-left: 5px;
+  }
+  #tag-input {
+    color: black !important;
+  }
+  #tags {
+    color: black !important;
   }
 </style>

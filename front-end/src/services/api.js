@@ -85,3 +85,14 @@ export async function atualizar_usuario(id_usuario, nome, senha, email, data_de_
 export async function get_usuario(id_usuario){
     return get(`usuario/${id_usuario}`)
 }
+
+export async function cadastrar_categoria(id_documento, nome){
+    return post(`categoria`, {
+        id_documento,
+        nome
+    })
+}
+
+export async function deletar_categoria(id_categoria){
+    return delete_(`categoria/${id_categoria}`)
+}
