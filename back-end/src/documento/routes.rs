@@ -18,9 +18,9 @@ pub fn criar_documento(
         .execute(&mut connection);
 
     match result {
-        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
+        Ok(msg) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            mensagem: None,
+            mensagem: Some(format!("Documento inserido com sucesso: {:?}", msg)),
         }))),
         Err(err) => Err(status::BadRequest(Json(RespontaGenerica {
             status: "erro".to_string(),
@@ -81,9 +81,9 @@ pub fn atualizar_documento(
         .execute(&mut connection);
 
     match result {
-        Ok(_) => Ok(status::Accepted(Json(RespontaGenerica {
+        Ok(msg) => Ok(status::Accepted(Json(RespontaGenerica {
             status: "sucesso".to_string(),
-            mensagem: None,
+            mensagem: Some(format!("Documento atualizado com sucesso: {:?}", msg)),
         }))),
         Err(err) => Err(status::BadRequest(Json(RespontaGenerica {
             status: "erro".to_string(),
