@@ -13,6 +13,22 @@ pub fn nova_categoria(
     let mut connection = crate::db::estabelecer_conexao();
     let categoria = nova_categoria.into_inner();
 
+    //Verificar se já existe uma categoria com o mesmo nome
+    let categoria_existente = categorias::table
+        .filter(categorias::nome.eq(&categoria.nome))
+        .first::<Categoria>(&mut connection);
+
+    match categoria_existente {
+        Ok(_) => {
+            return Ok(status::Accepted(Json(RespontaGenerica {
+                status: "sucesso".to_string(),
+                mensagem: None,
+            }))
+            .into());
+        }
+        Err(_) => (),
+    }
+
     let result = diesel::insert_into(categorias::table)
         .values(&categoria)
         .execute(&mut connection);
