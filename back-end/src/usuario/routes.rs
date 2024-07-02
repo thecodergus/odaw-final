@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use diesel::sql_types::Uuid;
 use rocket::serde::json::Json;
 use rocket::{http::hyper::server::conn, response::status}; // Add this line
+use sha_crypt::{sha512_check, sha512_simple, Sha512Params};
 
 use super::model::{AtualizarUsuario, CredenciaisUsuario, NovoUsuario, Usuario};
 
@@ -11,7 +12,7 @@ pub fn novo_usuario(
     novo_usuario: Json<NovoUsuario>,
 ) -> Result<status::Accepted<Json<RespontaGenerica>>, status::Conflict<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
-    let usuario = novo_usuario.into_inner();
+    let mut usuario = novo_usuario.into_inner();
 
     let procurar = usuarios::table
         .filter(usuarios::email.eq(&usuario.email))
@@ -23,6 +24,13 @@ pub fn novo_usuario(
             mensagem: Some(format!("Erro ao inserir usuário: email já cadastrado")),
         })));
     }
+
+    // Criptografar senha
+    let params = Sha512Params::new(10_000).expect("Erro ao criar parametros sha512");
+    let senha_criptografada =
+        sha512_simple(&usuario.senha, &params).expect("Erro ao criptografar senha");
+
+    usuario.senha = &senha_criptografada;
 
     let result = diesel::insert_into(usuarios::table)
         .values(&usuario)
@@ -49,11 +57,20 @@ pub fn fazer_login(
 
     let usuario = usuarios::table
         .filter(usuarios::email.eq(&login.email))
-        .filter(usuarios::senha.eq(&login.senha))
         .first::<Usuario>(&mut connection);
 
     match usuario {
-        Ok(usuario) => Ok(status::Accepted(Json(usuario))),
+        Ok(usuario) => match sha512_check(&login.senha, &usuario.senha) {
+            Ok(_) => Ok(status::Accepted(Json(usuario))),
+            Err(_) => {
+                return Err(status::NotFound(Json(RespontaGenerica {
+                    status: "erro".to_string(),
+                    mensagem: Some(format!(
+                    "Erro ao fazer login: Nenhum usuario com este e-mail e senha foi encontrado!"
+                )),
+                })))
+            }
+        },
         Err(_) => Err(status::NotFound(Json(RespontaGenerica {
             status: "erro".to_string(),
             mensagem: Some(format!(
