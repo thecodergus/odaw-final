@@ -50,3 +50,24 @@ export async function get_categorias(id_documento){
 export async function deletar_documento(id_documento){
     return delete_(`documento/${id_documento}`)
 }
+
+
+export async function atualizar_documento(id_documento, descricao, valor, data, id_usuario){
+    return put(`documento`, {
+        id: id_documento,
+        descricao,
+        valor,
+        data,
+        id_usuario        
+    })
+}
+
+export async function cadastrar_documento(tipo_de_documento, descricao, valor, data, id_usuario, categorias){
+    return post(`documento`, {
+        tipo_de_documento,
+        descricao,
+        valor,
+        data,
+        id_usuario        
+    })
+}   

@@ -14,6 +14,8 @@
     deletar_documento,
     get_categorias,
     get_documentos,
+    atualizar_documento,
+    cadastrar_documento,
   } from "../services/api";
   import { usuario } from "../services/store";
   import { each } from "chart.js/helpers";
@@ -50,8 +52,32 @@
     aoFechar: () => {
       modalCriarDocumento.mostrar = false;
     },
-    aoSalvar: () => {},
-    data: null,
+    aoSalvar: async () => {
+      try {
+        await cadastrar_documento(
+          tipo_documento,
+          modalCriarDocumento.data.descricao,
+          modalCriarDocumento.data.valor,
+          modalCriarDocumento.data.data.toISOString().split("T")[0],
+          modalCriarDocumento.data.id_usuario,
+          modalCriarDocumento.data.categorias
+        );
+      } catch (err) {
+        modalCriarDocumento.mostrar = false;
+        popUpTitulo = "Erro";
+        popUpMensagem = `Erro ao criar documento: ${err}`;
+        popUpMostrar = true;
+      }
+      modalCriarDocumento.mostrar = false;
+      atualizar_tudo();
+    },
+    data: {
+      descricao: "",
+      valor: 0,
+      data: new Date(),
+      id_usuario: usuario.get().id,
+      categorias: [],
+    },
   };
 
   let modalEditarDocumento = {
@@ -60,8 +86,31 @@
     aoFechar: () => {
       modalEditarDocumento.mostrar = false;
     },
-    aoSalvar: () => {},
-    data: null,
+    aoSalvar: async () => {
+      try {
+        await atualizar_documento(
+          modalEditarDocumento.data.id,
+          modalEditarDocumento.data.descricao,
+          modalEditarDocumento.data.valor,
+          modalEditarDocumento.data.data.toISOString().split("T")[0],
+          modalEditarDocumento.data.id_usuario
+        );
+      } catch (err) {
+        modalEditarDocumento.mostrar = false;
+        popUpTitulo = "Erro";
+        popUpMensagem = `Erro ao editar documento: ${err}`;
+        popUpMostrar = true;
+      }
+      modalEditarDocumento.mostrar = false;
+      atualizar_tudo();
+    },
+    data: {
+      descricao: "",
+      valor: 0,
+      data: new Date(),
+      id_usuario: usuario.get().id,
+      categorias: [],
+    },
   };
 
   let modalExcluirDocumento = {
@@ -74,6 +123,7 @@
       try {
         await deletar_documento(modalExcluirDocumento.data.id);
       } catch (err) {
+        modalEditarDocumento.mostrar = false;
         popUpTitulo = "Erro";
         popUpMensagem = `Erro ao excluir documento: ${err}`;
         popUpMostrar = true;
@@ -81,7 +131,13 @@
       atualizar_tudo();
       modalExcluirDocumento.mostrar = false;
     },
-    data: null,
+    data: {
+      descricao: "",
+      valor: 0,
+      data: new Date(),
+      id_usuario: usuario.get().id,
+      categorias: [],
+    },
   };
 
   let modalVerDocumento = {
@@ -112,8 +168,15 @@
     modalVerDocumento.data = documento;
   }
 
-  async function adicionar_documento() {
-    modalCriarDocumento.mostrar = false;
+  async function criar_documento() {
+    modalCriarDocumento.mostrar = true;
+    modalCriarDocumento.data = {
+      descricao: "",
+      valor: 0,
+      data: new Date(),
+      id_usuario: usuario.get().id,
+      categorias: [],
+    };
   }
 
   function escrever_data_cursivamente(data) {
@@ -150,6 +213,7 @@
             try {
               const categorias = await get_categorias(i.id);
               i.categorias = categorias.data;
+              i.data = new Date(i.data);
             } catch (e) {
               popUpTitulo = "Erro";
               popUpMensagem = `Erro ao buscar categorias: ${e}`;
@@ -213,9 +277,7 @@
 <div class="container">
   <div class="row">
     <h2>Minhas {titulo_pagina}</h2>
-    <button
-      class="btn btn-primary botao-amarelo"
-      on:click={() => (modalCriarDocumento.mostrar = true)}
+    <button class="btn btn-primary botao-amarelo" on:click={criar_documento}
       >Criar {tipo_documento.toLowerCase()}</button
     >
   </div>
@@ -242,7 +304,7 @@
         <DateInput
           id={"data-inicio"}
           bind:value={data_inicio}
-          format={"dd-MM-yyyy"}
+          format={"dd/MM/yyyy"}
           closeOnSelection={true}
           on:select={atualizar_tudo}
         />
@@ -252,7 +314,7 @@
         <DateInput
           id={"data-fim"}
           bind:value={data_fim}
-          format={"dd-MM-yyyy"}
+          format={"dd/MM/yyyy"}
           closeOnSelection={true}
           on:select={atualizar_tudo}
         />
@@ -309,7 +371,52 @@
   open={modalCriarDocumento.mostrar}
   title={modalCriarDocumento.titulo}
   onSave={modalCriarDocumento.aoSalvar}
-></Modal>
+>
+  {#if modalCriarDocumento.data}
+    <div class="form-control">
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text" id="basic-addon3">Descrição:</span>
+          <input
+            type="text"
+            class="form-control"
+            id="basic-url"
+            aria-describedby="basic-addon3 basic-addon4"
+            bind:value={modalCriarDocumento.data.descricao}
+          />
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">R$</span>
+        <input
+          type="text"
+          class="form-control"
+          aria-label="Amount (to the nearest dollar)"
+          bind:value={modalCriarDocumento.data.valor}
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Data</span>
+        <DateInput
+          id={"data-inicio"}
+          bind:value={modalCriarDocumento.data.data}
+          format={"dd/MM/yyyy"}
+          closeOnSelection={true}
+          on:select={atualizar_tudo}
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Categorias</span>
+        <div class="input-group">
+          {#each modalCriarDocumento.data.categorias as cat}
+            <span class="badge bg-secondary">{cat.nome}</span>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
+</Modal>
+
 <Modal
   onClosed={modalVerDocumento.aoFechar}
   open={modalVerDocumento.mostrar}
@@ -370,7 +477,49 @@
   title={modalEditarDocumento.titulo}
   onSave={modalEditarDocumento.aoSalvar}
 >
-  <h1>Opa</h1>
+  {#if modalEditarDocumento.data}
+    <div class="form-control">
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text" id="basic-addon3">Descrição:</span>
+          <input
+            type="text"
+            class="form-control"
+            id="basic-url"
+            aria-describedby="basic-addon3 basic-addon4"
+            bind:value={modalEditarDocumento.data.descricao}
+          />
+        </div>
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">R$</span>
+        <input
+          type="text"
+          class="form-control"
+          aria-label="Amount (to the nearest dollar)"
+          bind:value={modalEditarDocumento.data.valor}
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Data</span>
+        <DateInput
+          id={"data-inicio"}
+          bind:value={modalEditarDocumento.data.data}
+          format={"dd/MM/yyyy"}
+          closeOnSelection={true}
+          on:select={atualizar_tudo}
+        />
+      </div>
+      <div class="input-group mb-3">
+        <span class="input-group-text">Categorias</span>
+        <div class="input-group">
+          {#each modalEditarDocumento.data.categorias as cat}
+            <span class="badge bg-secondary">{cat.nome}</span>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
 </Modal>
 
 <Modal
