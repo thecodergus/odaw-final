@@ -85,7 +85,16 @@ pub fn atualizar_usuario(
     atualizar_usuario: Json<AtualizarUsuario>,
 ) -> Result<status::Accepted<Json<Usuario>>, status::Conflict<Json<RespontaGenerica>>> {
     let mut connection = crate::db::estabelecer_conexao();
-    let usuario = atualizar_usuario.into_inner();
+    let mut usuario = atualizar_usuario.into_inner();
+
+    // Criptografar senha caso tenha sido enviada
+    if let Some(senha) = usuario.senha {
+        let params = Sha512Params::new(10_000).expect("Erro ao criar parametros sha512");
+        let senha_criptografada =
+            sha512_simple(&senha, &params).expect("Erro ao criptografar senha");
+
+        usuario.senha = Some(senha_criptografada);
+    }
 
     let result = diesel::update(usuarios::table.find(usuario.id))
         .set(&usuario)
